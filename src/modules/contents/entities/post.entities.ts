@@ -8,6 +8,8 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { PostBodyType } from '../constants';
+
 @Entity('content_posts')
 export class PostEntity extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
@@ -25,7 +27,8 @@ export class PostEntity extends BaseEntity {
     @Column({ comment: '关键字', type: 'simple-array', nullable: true })
     keyword?: string;
 
-    // type: PostBodyType;
+    @Column({ comment: '发布时间', type: 'enum', enum: PostBodyType, default: PostBodyType.MD })
+    type: PostBodyType;
 
     @Column({ comment: '发布时间', type: 'varchar', nullable: true })
     publishedAt?: Date | null;
