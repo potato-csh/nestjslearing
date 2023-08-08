@@ -20,7 +20,7 @@ export class PostService {
      * @param callback 添加额外的查询
      */
     async paginate(options: PaginateOptions, callback?: QueryHook<PostEntity>) {
-        const qb = await this.bulidListQuery(this.repository.buildBaseQB(), options, callback);
+        const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
         return paginate(qb, options);
     }
 
@@ -71,7 +71,7 @@ export class PostService {
      * @param options 排查分页选项后的查询选项
      * @param callback 添加额外的查询
      */
-    protected async bulidListQuery(
+    protected async buildListQuery(
         qb: SelectQueryBuilder<PostEntity>,
         options: Record<string, any>,
         callback?: QueryHook<PostEntity>,

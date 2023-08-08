@@ -16,8 +16,11 @@ export class DatabaseModule {
     }
 
     /**
-     * typeorm0.3中是通过dataSource.getRepository来获取Repository，但是nestjs中无法获得dataSource，只有通过注入的方式才可以获取；
-     * 默认只能获取内置的一些方法，无法进行扩展extend。
+     * 背景: typeorm0.3中是通过dataSource.getRepository来获取Repository，但是nestjs中无法获得dataSource，只有通过注入的方式才可以获取；
+     *      默认只能获取内置的一些方法，无法进行扩展extend。
+     * 作用: 为每个传入的 repositories 中的类型创建一个提供者（Provider）,
+     *      并将这些提供者添加到 providers 数组中。
+     *      这些提供者将用于在模块中注册相关的依赖注入。
      * @param repositories
      * @param dataSourceName
      */
@@ -33,8 +36,16 @@ export class DatabaseModule {
             if (!entity) {
                 continue;
             }
-
+            /**
+             * 添加一个提供者对象到 providers 数组中，提供者的属性包括：
+             *      inject：依赖的其他服务或模块的标记数组，这里使用 getDataSourceToken 方法生成数据源的标记。
+             *      provide：提供的仓库类型，即 Repo。
+             *      useFactory：使用工厂函数创建仓库实例。工厂函数接收一个 dataSource 参数，返回一个 Repo 类型的实例。
+             * 在工厂函数内部，调用 dataSource.getRepository 方法获取 entity 对应的默认仓库对象。
+             * 使用 Repo 类的构造函数创建一个新的 Repo 实例，传入获取到的默认仓库对象的属性。
+             */
             providers.push({
+                // inject: [getDataSourceToken('数据连接池，默认是default')],
                 inject: [getDataSourceToken(dataSourceName)],
                 provide: Repo,
                 /**
