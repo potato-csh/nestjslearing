@@ -7,7 +7,8 @@ import { DatabaseModule } from '../database/database.module';
 import { PostController } from './controllers';
 import { PostEntity } from './entities';
 import { PostRepository } from './repositories';
-import { PostService } from './services';
+import { PostService, SanitizeService } from './services';
+import { PostSubscriber } from './subscribers';
 
 @Module({
     imports: [
@@ -15,7 +16,7 @@ import { PostService } from './services';
         DatabaseModule.forRepository([PostRepository]),
     ],
     controllers: [PostController],
-    providers: [PostService],
+    providers: [PostService, SanitizeService, PostSubscriber],
     exports: [PostService, DatabaseModule.forRepository([PostRepository])],
 })
 export class ContentModule {}
