@@ -4,9 +4,10 @@ import { isFunction, isNil, omit } from 'lodash';
 import { EntityNotFoundError, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 
 import { paginate } from '@/modules/database/helpers';
-import { PaginateOptions, QueryHook } from '@/modules/database/types';
+import { QueryHook } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
+import { QueryPostDto } from '../dtos/post.dto';
 import { PostEntity } from '../entities';
 import { PostRepository } from '../repositories/post.repository';
 
@@ -19,7 +20,7 @@ export class PostService {
      * @param options 分页选项
      * @param callback 添加额外的查询
      */
-    async paginate(options: PaginateOptions, callback?: QueryHook<PostEntity>) {
+    async paginate(options: QueryPostDto, callback?: QueryHook<PostEntity>) {
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
         return paginate(qb, options);
     }
