@@ -4,11 +4,19 @@ import {
     Column,
     CreateDateColumn,
     Entity,
+    JoinColumn,
+    JoinTable,
+    ManyToMany,
+    ManyToOne,
     PrimaryGeneratedColumn,
+    Relation,
     UpdateDateColumn,
 } from 'typeorm';
 
 import { PostBodyType } from '../constants';
+
+import { CategoryEntity } from './category.entity';
+import { CommentEntity } from './comment.entity';
 
 @Exclude()
 @Entity('content_posts')
@@ -52,4 +60,21 @@ export class PostEntity extends BaseEntity {
     @Expose()
     @UpdateDateColumn({ comment: '更新时间' })
     updatedAt: Date;
+
+    @ManyToMany((type) => CategoryEntity, (category) => category.posts, {
+        // 在新增文章时,如果所属分类不存在则直接创建
+        cascade: true,
+    })
+    @JoinTable()
+    categories: Relation<CategoryEntity>;
+
+    // 删除文章也会删除评论
+    @ManyToOne((type) => CommentEntity, (comment) => comment.post, {
+        cascade: true,
+    })
+    @JoinColumn()
+    comments: Relation<CommentEntity>;
+
+    @Expose()
+    commentCount: number;
 }
