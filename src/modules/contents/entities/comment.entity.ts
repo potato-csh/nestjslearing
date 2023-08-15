@@ -32,16 +32,19 @@ export class CommentEntity extends BaseEntity {
     createdAt: Date;
 
     @Expose()
+    @Type(() => PostEntity)
     @ManyToMany((type) => PostEntity, (post) => post.categories)
     post: Relation<PostEntity>;
 
     @Expose()
-    depth: 0;
+    depth = 0;
 
+    @Type(() => CommentEntity)
     @TreeParent({ onDelete: `CASCADE` })
     parent: Relation<CommentEntity> | null;
 
     @Expose()
+    @Type(() => CommentEntity)
     @TreeChildren({ cascade: true })
-    children: Relation<CommentEntity>;
+    children: Relation<CommentEntity>[];
 }
