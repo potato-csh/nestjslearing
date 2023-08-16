@@ -39,7 +39,7 @@ export class CreateCategoryDto {
 
     @IsUUID(undefined, { always: true, message: '父分类ID格式不正确' })
     @IsOptional({ always: true })
-    @ValidateIf((value) => value.page !== null && value.page)
+    @ValidateIf((value) => value.parent !== null && value.parent)
     @Transform(({ value }) => (value === 'null' ? null : value))
     parent?: string;
 

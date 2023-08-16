@@ -1,13 +1,12 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
     BaseEntity,
     Column,
     CreateDateColumn,
     Entity,
-    JoinColumn,
     JoinTable,
     ManyToMany,
-    ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     Relation,
     UpdateDateColumn,
@@ -61,6 +60,8 @@ export class PostEntity extends BaseEntity {
     @UpdateDateColumn({ comment: '更新时间' })
     updatedAt: Date;
 
+    @Expose()
+    @Type(() => CategoryEntity)
     @ManyToMany((type) => CategoryEntity, (category) => category.posts, {
         // 在新增文章时,如果所属分类不存在则直接创建
         cascade: true,
@@ -69,10 +70,7 @@ export class PostEntity extends BaseEntity {
     categories: Relation<CategoryEntity>;
 
     // 删除文章也会删除评论
-    @ManyToOne((type) => CommentEntity, (comment) => comment.post, {
-        cascade: true,
-    })
-    @JoinColumn()
+    @OneToMany((type) => CommentEntity, (comment) => comment.post, { cascade: true })
     comments: Relation<CommentEntity>;
 
     @Expose()

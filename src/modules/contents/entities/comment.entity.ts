@@ -5,7 +5,7 @@ import {
     CreateDateColumn,
     Entity,
     ManyToOne,
-    PrimaryColumn,
+    PrimaryGeneratedColumn,
     Relation,
     Tree,
     TreeChildren,
@@ -18,7 +18,7 @@ import { PostEntity } from './post.entity';
 @Entity('content_comments')
 export class CommentEntity extends BaseEntity {
     @Expose()
-    @PrimaryColumn({ type: 'varchar', generated: 'uuid', length: 36 })
+    @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Expose()

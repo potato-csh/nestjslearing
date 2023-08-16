@@ -6,9 +6,9 @@ import {
     IsOptional,
     IsUUID,
     MaxLength,
-    ValidateIf,
     IsNumber,
     Min,
+    ValidateIf,
 } from 'class-validator';
 import { toNumber } from 'lodash';
 
@@ -46,15 +46,15 @@ export class QueryCommentTreeDto extends PickType(QueryCommentDto, ['post']) {}
 export class CreateCommentDto {
     @MaxLength(1000, { message: '评论内容不能超过$constraint1个字' })
     @IsNotEmpty({ message: '评论内容不能为空' })
-    body!: string;
+    body: string;
 
     @IsUUID(undefined, { message: '文章ID格式错误' })
     @IsDefined({ message: '评论文章ID必须指定' })
-    post!: string;
+    post: string;
 
-    @IsUUID(undefined, { message: '父评论ID格式不正确' })
+    @IsUUID(undefined, { always: true, message: '父评论ID格式不正确' })
     @ValidateIf((value) => value.parent !== null && value.parent)
-    @IsOptional()
+    @IsOptional({ always: true })
     @Transform(({ value }) => (value === 'null' ? null : value))
     parent?: string;
 }
