@@ -39,13 +39,17 @@ export class QueryPostDto implements PaginateOptions {
     @Min(1, { message: `当前页必须大于1` })
     @IsNumber()
     @IsOptional()
-    page: 1;
+    page = 1;
 
     @Transform(({ value }) => toNumber(value))
     @Min(1, { message: `每页显示数据必须大于1` })
     @IsNumber()
     @IsOptional()
-    limit: 10;
+    limit = 10;
+
+    @IsUUID(undefined, { message: '分类ID格式错误' })
+    @IsOptional()
+    category?: string;
 }
 
 /**
@@ -91,6 +95,14 @@ export class CreatPostDto {
     @IsNumber(undefined, { always: true })
     @IsOptional({ always: true })
     customOrder = 0;
+
+    @IsUUID(undefined, {
+        each: true,
+        always: true,
+        message: '分类ID格式不正确',
+    })
+    @IsOptional({ always: true })
+    categories?: string[];
 }
 
 /**

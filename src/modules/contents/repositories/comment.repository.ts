@@ -1,4 +1,4 @@
-import { unset } from 'lodash';
+import { pick, unset } from 'lodash';
 
 import {
     FindOptionsUtils,
@@ -15,14 +15,13 @@ import { CommentEntity } from '../entities';
 type FindCommentTreeOptions = FindTreeOptions & {
     addQuery?: (query: SelectQueryBuilder<CommentEntity>) => SelectQueryBuilder<CommentEntity>;
 };
-
 @CustomRepository(CommentEntity)
 export class CommentRepository extends TreeRepository<CommentEntity> {
     /**
-     * 创建基础查询器
+     * 构建基础查询器
      */
     buildBaseQB(qb: SelectQueryBuilder<CommentEntity>): SelectQueryBuilder<CommentEntity> {
-        return this.createQueryBuilder('comments')
+        return qb
             .leftJoinAndSelect(`comment.parent`, 'parent')
             .leftJoinAndSelect(`comment.post`, 'post')
             .orderBy('comment.createdAt', 'DESC');
@@ -30,8 +29,9 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
     /**
      * 查询树
+     * @param options
      */
-    async findTrees(options?: FindTreeOptions): Promise<CommentEntity[]> {
+    async findTrees(options: FindCommentTreeOptions = {}) {
         options.relations = ['parent', 'children'];
         const roots = await this.findRoots(options);
         await Promise.all(roots.map((root) => this.findDescendantsTree(root, options)));
@@ -40,6 +40,7 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
     /**
      * 查询顶级评论
+     * @param options
      */
     findRoots(options: FindCommentTreeOptions = {}) {
         const { addQuery, ...rest } = options;
@@ -51,7 +52,6 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
         let qb = this.buildBaseQB(this.createQueryBuilder('comment'));
         FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, rest);
-
         qb.where(`${escapeAlias('comment')}.${escapeColumn(parentPropertyName)} IS NULL`);
         qb = addQuery ? addQuery(qb) : qb;
         return qb.getMany();
@@ -59,6 +59,9 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
     /**
      * 创建后代查询器
+     * @param closureTableAlias
+     * @param entity
+     * @param options
      */
     createDtsQueryBuilder(
         closureTableAlias: string,
@@ -74,23 +77,24 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
     /**
      * 查询后代树
+     * @param entity
+     * @param options
      */
     async findDescendantsTree(
         entity: CommentEntity,
-        options?: FindTreeOptions,
+        options: FindCommentTreeOptions = {},
     ): Promise<CommentEntity> {
         const qb: SelectQueryBuilder<CommentEntity> = this.createDtsQueryBuilder(
             'treeClosure',
             entity,
             options,
         );
-        FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, options);
-
+        FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, pick(options, ['relations', 'depth']));
         const entities = await qb.getRawAndEntities();
         const relationMaps = TreeRepositoryUtils.createRelationMaps(
             this.manager,
             this.metadata,
-            'treeEntity',
+            'comment',
             entities.raw,
         );
         TreeRepositoryUtils.buildChildrenEntityTree(
@@ -100,7 +104,7 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
             relationMaps,
             {
                 depth: -1,
-                ...options,
+                ...pick(options, ['relations']),
             },
         );
 
@@ -109,6 +113,8 @@ export class CommentRepository extends TreeRepository<CommentEntity> {
 
     /**
      * 打平并展开树
+     * @param trees
+     * @param depth
      */
     async toFlatTrees(trees: CommentEntity[], depth = 0) {
         const data: Omit<CommentEntity, 'children'>[] = [];
