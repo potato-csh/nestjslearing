@@ -7,6 +7,7 @@ import { EntityNotFoundError, SelectQueryBuilder } from 'typeorm';
 import { treePaginate } from '@/modules/database/helpers';
 
 import { CreateCommentDto, QueryCommentDto, QueryCommentTreeDto } from '../dtos';
+import { PostEntity } from '../entities';
 import { CommentEntity } from '../entities/comment.entity';
 import { CommentRepository } from '../repositories/comment.repository';
 import { PostRepository } from '../repositories/post.repository';
@@ -62,18 +63,20 @@ export class CommentService {
 
     /**
      * 新增评论
+     * @param data
+     * @param user
      */
     async create(data: CreateCommentDto) {
         const parent = await this.getParent(undefined, data.parent);
         if (!isNil(parent) && parent.post.id !== data.post) {
             throw new ForbiddenException('Parent comment and child comment must belong same post!');
         }
-        // const item = await this.repository.save({
-        //     ...data,
-        //     parent,
-        //     post: await this.getPost(data.post),
-        // });
-        // return this.repository.findOneOrFail({ where: { id: item.id } });
+        const item = await this.repository.save({
+            ...data,
+            parent,
+            post: (await this.getPost(data.post)) as PostEntity,
+        });
+        return this.repository.findOneOrFail({ where: { id: item.id } });
     }
 
     /**
