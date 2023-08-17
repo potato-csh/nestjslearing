@@ -28,7 +28,7 @@ export class CategoryRepository extends TreeRepository<CategoryEntity> {
         FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, options);
 
         return qb
-            .where(`${escapeAlias('treeEntity')}.${escapeColumn(parentPropertyName)} IS NULL`)
+            .where(`${escapeAlias('category')}.${escapeColumn(parentPropertyName)} IS NULL`)
             .getMany();
     }
 
