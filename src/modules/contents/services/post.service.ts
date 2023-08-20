@@ -1,19 +1,27 @@
 import { Injectable } from '@nestjs/common';
+import { isArray } from 'class-validator';
 import { isFunction, isNil, omit } from 'lodash';
 
-import { EntityNotFoundError, IsNull, Not, SelectQueryBuilder } from 'typeorm';
+import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 
 import { paginate } from '@/modules/database/helpers';
 import { QueryHook } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
-import { QueryPostDto } from '../dtos/post.dto';
-import { PostEntity } from '../entities';
+import { CreatPostDto, QueryPostDto } from '../dtos/post.dto';
+import { CategoryEntity, PostEntity } from '../entities';
+import { CategoryRepository } from '../repositories';
 import { PostRepository } from '../repositories/post.repository';
+
+import { CategoryService } from './category.service';
 
 @Injectable()
 export class PostService {
-    constructor(protected repository: PostRepository) {}
+    constructor(
+        protected repository: PostRepository,
+        protected categoryRepository: CategoryRepository,
+        protected categoryService: CategoryService,
+    ) {}
 
     /**
      * 获取分页数据
@@ -43,8 +51,17 @@ export class PostService {
      * 创建文章
      * @param data
      */
-    async create(data: Record<string, any>) {
-        const item = await this.repository.save(data);
+    async create(data: CreatPostDto) {
+        const createPostDto = {
+            ...data,
+            // 文章所属分类
+            categories: (isArray(data.categories)
+                ? await this.categoryRepository.findBy({
+                      id: In(data.categories),
+                  })
+                : []) as unknown as CategoryEntity,
+        };
+        const item = await this.repository.save(createPostDto);
         return this.detail(item.id);
     }
 
@@ -53,7 +70,16 @@ export class PostService {
      * @param data
      */
     async update(data: Record<string, any>) {
-        await this.repository.update(data.id, omit(data, ['id']));
+        const post = await this.detail(data.id);
+        if (isArray(data.categories)) {
+            // 更新文章所属分类
+            await this.repository
+                .createQueryBuilder('post')
+                .relation(PostEntity, 'categories')
+                .of(post)
+                .addAndRemove(data.categories, post.categories ?? []);
+        }
+        await this.repository.update(data.id, omit(data, ['id', 'categories']));
         return this.detail(data.id);
     }
 
@@ -77,7 +103,7 @@ export class PostService {
         options: Record<string, any>,
         callback?: QueryHook<PostEntity>,
     ) {
-        const { orderBy, isPublished } = options;
+        const { category, orderBy, isPublished } = options;
         let newQb = qb;
         if (typeof isPublished === 'boolean') {
             newQb = isPublished
@@ -89,6 +115,9 @@ export class PostService {
                   });
         }
         newQb = this.queryOrderBy(newQb, orderBy);
+        if (category) {
+            newQb = await this.queryByCategory(category, newQb);
+        }
         if (callback) return callback(newQb);
         return newQb;
     }
@@ -114,5 +143,20 @@ export class PostService {
                     .addOrderBy('post.updatedAt', 'DESC')
                     .addOrderBy('post.publishedAt', 'DESC');
         }
+    }
+
+    /**
+     * 查询出分类及其后代分类下的所有文章的Query构建
+     * @param id
+     * @param qb
+     */
+    protected async queryByCategory(id: string, qb: SelectQueryBuilder<PostEntity>) {
+        const root = await this.categoryService.detail(id);
+        const tree = await this.categoryRepository.findDescendantsTree(root);
+        const flatDes = await this.categoryRepository.toFlatTrees(tree.children);
+        const ids = [tree.id, ...flatDes.map((item) => item.id)];
+        return qb.where('categories.id IN (:...ids)', {
+            ids,
+        });
     }
 }

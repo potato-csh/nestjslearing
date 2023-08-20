@@ -7,7 +7,7 @@ import {
     JoinTable,
     ManyToMany,
     OneToMany,
-    PrimaryGeneratedColumn,
+    PrimaryColumn,
     Relation,
     UpdateDateColumn,
 } from 'typeorm';
@@ -21,7 +21,8 @@ import { CommentEntity } from './comment.entity';
 @Entity('content_posts')
 export class PostEntity extends BaseEntity {
     @Expose()
-    @PrimaryGeneratedColumn('uuid')
+    // @PrimaryGeneratedColumn('uuid')
+    @PrimaryColumn({ type: 'varchar', generated: 'uuid', length: 36 })
     id: string;
 
     @Expose()
@@ -38,7 +39,7 @@ export class PostEntity extends BaseEntity {
 
     @Expose()
     @Column({ comment: '关键字', type: 'simple-array', nullable: true })
-    keyword?: string;
+    keyword?: string[];
 
     @Expose()
     @Column({ comment: '发布时间', type: 'enum', enum: PostBodyType, default: PostBodyType.MD })
