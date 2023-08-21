@@ -18,11 +18,13 @@ import {
 } from 'class-validator';
 import { toNumber, isNil } from 'lodash';
 
+import { DtoValidation } from '@/modules/core/decorators/dto-validation.decorator';
 import { toBoolean } from '@/modules/core/helpers';
 import { PaginateOptions } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
 
+@DtoValidation({ type: 'query' })
 export class QueryPostDto implements PaginateOptions {
     @Transform(({ value }) => toBoolean(value))
     @IsBoolean()
@@ -56,6 +58,7 @@ export class QueryPostDto implements PaginateOptions {
  * 文章创建验证
  */
 // @DtoValidation({groups:['create']})
+@DtoValidation({ groups: ['create'] })
 export class CreatPostDto {
     @MaxLength(255, {
         always: true,
@@ -108,6 +111,7 @@ export class CreatPostDto {
 /**
  * 文章更新验证
  */
+@DtoValidation({ groups: ['update'] })
 export class UpdatePostDto extends PartialType(CreatPostDto) {
     @IsUUID(undefined, { groups: ['update'], message: `文章ID格式错误` })
     @IsDefined({ groups: ['update'], message: `文章ID必须指定` })
