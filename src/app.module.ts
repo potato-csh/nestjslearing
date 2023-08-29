@@ -8,9 +8,10 @@ import { AppFilter } from './modules/core/providers/app.filter';
 import { AppIntercepter } from './modules/core/providers/app.interceptor';
 import { AppPipe } from './modules/core/providers/app.pipe';
 import { DatabaseModule } from './modules/database/database.module';
+import { ExampleModule } from './modules/example/example.module';
 
 @Module({
-    imports: [DatabaseModule.forRoot(database), ContentModule],
+    imports: [DatabaseModule.forRoot(database), ContentModule, ExampleModule],
     providers: [
         {
             provide: APP_PIPE,
