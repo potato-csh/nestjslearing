@@ -3,6 +3,7 @@ import {
     BaseEntity,
     Column,
     CreateDateColumn,
+    DeleteDateColumn,
     Entity,
     JoinTable,
     ManyToMany,
@@ -60,6 +61,10 @@ export class PostEntity extends BaseEntity {
     @Expose()
     @UpdateDateColumn({ comment: '更新时间' })
     updatedAt: Date;
+
+    @Expose()
+    @DeleteDateColumn({ comment: '删除时间' })
+    deletedAt: Date;
 
     @Expose()
     @Type(() => CategoryEntity)
