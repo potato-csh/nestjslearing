@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { isArray } from 'class-validator';
 import { isFunction, isNil, omit } from 'lodash';
 
 import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 
 import { SelectTrashMode } from '@/modules/database/constants';
-import { paginate } from '@/modules/database/helpers';
+import { paginate, treePaginate } from '@/modules/database/helpers';
 import { QueryHook } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
@@ -14,7 +14,10 @@ import { CategoryEntity, PostEntity } from '../entities';
 import { CategoryRepository } from '../repositories';
 import { PostRepository } from '../repositories/post.repository';
 
+import { SearchType } from '../types';
+
 import { CategoryService } from './category.service';
+import { SearchService } from './search.service';
 
 @Injectable()
 export class PostService {
@@ -22,6 +25,8 @@ export class PostService {
         protected repository: PostRepository,
         protected categoryRepository: CategoryRepository,
         protected categoryService: CategoryService,
+        protected searchService?: SearchService,
+        protected search_type: SearchType = 'against',
     ) {}
 
     /**
@@ -30,6 +35,19 @@ export class PostService {
      * @param callback 添加额外的查询
      */
     async paginate(options: QueryPostDto, callback?: QueryHook<PostEntity>) {
+        if (
+            !isNil(this.searchService) &&
+            !isNil(options.search) &&
+            this.search_type === 'elastic'
+        ) {
+            const { search: text, page, limit } = options;
+            const results = await this.searchService.search(text);
+            const ids = results.map((result) => result.id);
+            const posts =
+                ids.length <= 0 ? [] : await this.repository.find({ where: { id: In(ids) } });
+            return treePaginate({ page, limit }, posts);
+        }
+
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);
         return paginate(qb, options);
     }
@@ -63,6 +81,13 @@ export class PostService {
                 : []) as unknown as CategoryEntity,
         };
         const item = await this.repository.save(createPostDto);
+        if (!isNil(this.searchService)) {
+            try {
+                await this.searchService.create(item);
+            } catch (err) {
+                throw new InternalServerErrorException(err);
+            }
+        }
         return this.detail(item.id);
     }
 
@@ -81,6 +106,13 @@ export class PostService {
                 .addAndRemove(data.categories, post.categories ?? []);
         }
         await this.repository.update(data.id, omit(data, ['id', 'categories']));
+        if (!isNil(this.searchService)) {
+            try {
+                await this.searchService.update(post);
+            } catch (err) {
+                throw new InternalServerErrorException(err);
+            }
+        }
         return this.detail(data.id);
     }
 
@@ -93,6 +125,7 @@ export class PostService {
             where: { id: In(ids) },
             withDeleted: true,
         });
+        let result: PostEntity[] = [];
         if (trashed) {
             // 对已软删除的数据再次删除时直接通过remove方法从数据库中清除
             const directs = items.filter((item) => !isNil(item.deletedAt));
@@ -102,7 +135,15 @@ export class PostService {
                 ...(await this.repository.softRemove(softs)),
             ];
         }
-        return this.repository.remove(items);
+        result = await this.repository.remove(items);
+        if (!isNil(this.searchService)) {
+            try {
+                for (const id of ids) await this.searchService.remove(id);
+            } catch (err) {
+                throw new InternalServerErrorException(err);
+            }
+        }
+        return result;
     }
 
     /**
@@ -111,13 +152,20 @@ export class PostService {
      */
     async restore(ids: string[]) {
         const items = await this.repository.find({
-            where: { id: In(ids) },
+            where: { id: In(ids) } as any,
             withDeleted: true,
         });
         // 过滤掉不在回收站中的数据
-        const trasheds = items.filter((item) => !isNil(item)).map((item) => item.id);
+        const trasheds = items.filter((item) => !isNil(item));
         if (trasheds.length < 0) return [];
-        await this.repository.restore(trasheds);
+        await this.repository.restore(trasheds.map((item) => item.id));
+        if (!isNil(this.searchService)) {
+            try {
+                for (const id of trasheds) await this.searchService.create(id);
+            } catch (err) {
+                throw new InternalServerErrorException(err);
+            }
+        }
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), {}, async (qbuilder) =>
             qbuilder.andWhereInIds(trasheds),
         );
@@ -135,7 +183,7 @@ export class PostService {
         options: Record<string, any>,
         callback?: QueryHook<PostEntity>,
     ) {
-        const { category, orderBy, isPublished, trashed = SelectTrashMode.NONE } = options;
+        const { category, orderBy, isPublished, search, trashed = SelectTrashMode.NONE } = options;
         let newQb = qb;
         // 是否查询回收站
         if (trashed === SelectTrashMode.ALL || trashed === SelectTrashMode.ONLY) {
@@ -150,6 +198,29 @@ export class PostService {
                 : newQb.where({
                       publishedAt: IsNull(),
                   });
+        }
+        if (!isNil(search)) {
+            if (this.search_type === 'like') {
+                qb.andWhere('title LIKE :search', { search: `%${search}%` })
+                    .orWhere('body LIKE :search', { search: `%${search}%` })
+                    .orWhere('summary LIKE :search', { search: `%${search}%` })
+                    .orWhere('categories.name LIKE :search', {
+                        search: `%${search}%`,
+                    });
+            } else {
+                qb.andWhere('MATCH(title) AGAINST (:search IN BOOLEAN MODE)', {
+                    search: `${search}*`,
+                })
+                    .orWhere('MATCH(body) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    })
+                    .orWhere('MATCH(summary) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    })
+                    .orWhere('MATCH(categories.name) AGAINST (:search IN BOOLEAN MODE)', {
+                        search: `${search}*`,
+                    });
+            }
         }
         newQb = this.queryOrderBy(newQb, orderBy);
         if (category) {
@@ -178,7 +249,8 @@ export class PostService {
                 return qb
                     .orderBy('post.createdAt', 'DESC')
                     .addOrderBy('post.updatedAt', 'DESC')
-                    .addOrderBy('post.publishedAt', 'DESC');
+                    .addOrderBy('post.publishedAt', 'DESC')
+                    .addOrderBy('commentCount', 'DESC');
         }
     }
 
