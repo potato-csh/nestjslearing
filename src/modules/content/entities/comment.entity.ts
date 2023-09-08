@@ -1,26 +1,22 @@
 import { Expose, Type } from 'class-transformer';
 import {
-    BaseEntity,
     Column,
     CreateDateColumn,
     Entity,
     ManyToOne,
-    PrimaryGeneratedColumn,
     Relation,
     Tree,
     TreeChildren,
     TreeParent,
 } from 'typeorm';
 
+import { BaseEntity } from '@/modules/database/base/entity';
+
 import { PostEntity } from './post.entity';
 
 @Tree('materialized-path')
 @Entity('content_comments')
 export class CommentEntity extends BaseEntity {
-    @Expose()
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
-
     @Expose()
     @Column({ comment: '评论内容', type: 'text' })
     body: string;
