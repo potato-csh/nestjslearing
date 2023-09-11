@@ -1,8 +1,8 @@
 import { isNil } from 'lodash';
 import { IPaginationMeta, IPaginationOptions } from 'nestjs-typeorm-paginate';
-import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { FindTreeOptions, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
 
-import { OrderType } from './constants';
+import { OrderType, SelectTrashMode } from './constants';
 
 /**
  * 分页验证DTO接口
@@ -117,3 +117,28 @@ export const getOrderByQuery = <E extends ObjectLiteral>(
     }
     return qb.orderBy(`${alias}.${(orderBy as any).name}`, (orderBy as any).order);
 };
+
+/**
+ * 服务类数据列表查询类型
+ */
+export type ServiceListQueryOption<E extends ObjectLiteral> =
+    | ServiceListQueryOptionWithTrashed<E>
+    | ServiceListQueryOptionNotWithTrashed<E>;
+
+/**
+ * 带有软删除的服务类数据列表查询类型
+ */
+type ServiceListQueryOptionWithTrashed<E extends ObjectLiteral> = Omit<
+    FindTreeOptions & QueryParams<E>,
+    'withTrashed'
+> & {
+    trashed?: `${SelectTrashMode}`;
+} & Record<string, any>;
+
+/**
+ * 不带有软删除的服务类数据列表查询类型
+ */
+type ServiceListQueryOptionNotWithTrashed<E extends ObjectLiteral> = Omit<
+    ServiceListQueryOptionWithTrashed<E>,
+    'trashed'
+>;

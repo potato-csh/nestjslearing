@@ -4,6 +4,7 @@ import { isFunction, isNil, omit } from 'lodash';
 
 import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from 'typeorm';
 
+import { BaseService } from '@/modules/database/base/service';
 import { SelectTrashMode } from '@/modules/database/constants';
 import { paginate, treePaginate } from '@/modules/database/helpers';
 import { QueryHook } from '@/modules/database/types';
@@ -19,15 +20,24 @@ import { SearchType } from '../types';
 import { CategoryService } from './category.service';
 import { SearchService } from './search.service';
 
+// 文章查询接口
+type FindParams = {
+    [key in keyof Omit<QueryPostDto, 'limit' | 'page'>]: QueryPostDto[key];
+};
+
 @Injectable()
-export class PostService {
+export class PostService extends BaseService<PostEntity, PostRepository, FindParams> {
+    protected enableTrash = true;
+
     constructor(
         protected repository: PostRepository,
         protected categoryRepository: CategoryRepository,
         protected categoryService: CategoryService,
         protected searchService?: SearchService,
         protected search_type: SearchType = 'against',
-    ) {}
+    ) {
+        super(repository);
+    }
 
     /**
      * 获取分页数据
@@ -222,7 +232,7 @@ export class PostService {
                     });
             }
         }
-        newQb = this.queryOrderBy(newQb, orderBy);
+        newQb = this.addOrderByQuery(newQb, orderBy);
         if (category) {
             newQb = await this.queryByCategory(category, newQb);
         }
@@ -235,7 +245,7 @@ export class PostService {
      * @param qb
      * @param orderBy 排序方式
      */
-    protected queryOrderBy(qb: SelectQueryBuilder<PostEntity>, orderBy?: PostOrderType) {
+    protected addOrderByQuery(qb: SelectQueryBuilder<PostEntity>, orderBy?: PostOrderType) {
         switch (orderBy) {
             case PostOrderType.CREATED:
                 return qb.orderBy('post.createdAt', 'DESC');

@@ -93,7 +93,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
      * @param entity
      * @param options
      */
-    async findDescendantsTree(entity: E, options: FindTreeOptions & QueryParams<E>) {
+    async findDescendantsTree(entity: E, options?: FindTreeOptions & QueryParams<E>) {
         const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
         let qb = this.buildBaseQB(
             this.createDescendantsQueryBuilder(this.qbName, 'treeClosure', entity),
