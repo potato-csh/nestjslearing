@@ -7,9 +7,10 @@ import { PostEntity } from '../entities/post.entity';
 // 给PostEntity绑定为自定义Repository元数据 (CUSTOM_REPOSITORY_METADATA)
 @CustomRepository(PostEntity)
 export class PostRepository extends BaseRepository<PostEntity> {
-    protected _qbName: 'post';
+    protected _qbName = 'post';
 
     buildBaseQB() {
+        // 在查询之前先查询出评论数量在添加到commentCount字段上
         return this.createQueryBuilder(this.qbName)
             .leftJoinAndSelect(`${this.qbName}.categories`, 'categories')
             .addSelect((subQuery) => {

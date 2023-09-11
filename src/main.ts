@@ -10,6 +10,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
     // 允许跨域
     app.enableCors();
+    // console.log('service starting...');
     await app.listen(3000);
 }
 bootstrap();

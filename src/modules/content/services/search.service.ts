@@ -37,7 +37,7 @@ export class SearchService {
             index: this.index,
             document: {
                 ...pick(instanceToPlain(post), ['id', 'title', 'body', 'summary']),
-                categories: ((post.categories ?? []) as string[]).join(','),
+                categories: (post.categories ?? []).join(','),
             },
         });
     }
@@ -49,7 +49,7 @@ export class SearchService {
     async update(post: PostEntity) {
         const newBody: PostSearchBody = {
             ...pick(instanceToPlain(post), ['title', 'body', 'author', 'summary']),
-            categories: ((post.categories ?? []) as string[]).join(','),
+            categories: post.categories ?? [].join(','),
         };
 
         const script = Object.entries(newBody).reduce(

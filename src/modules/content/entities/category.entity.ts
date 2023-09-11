@@ -3,8 +3,8 @@ import {
     Column,
     DeleteDateColumn,
     Entity,
+    ManyToMany,
     Index,
-    ManyToOne,
     Relation,
     Tree,
     TreeChildren,
@@ -28,12 +28,15 @@ export class CategoryEntity extends BaseEntity {
     @Column({ comment: '分类排序', default: 0 })
     customOrder: number;
 
-    @ManyToOne((type) => PostEntity, (post) => post.categories, {
-        nullable: false,
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-    })
-    posts: Relation<PostEntity>;
+    // @ManyToMany((type) => PostEntity, (post) => post.categories, {
+    //     nullable: false,
+    //     onDelete: 'CASCADE',
+    //     onUpdate: 'CASCADE',
+    // })
+    // posts: Relation<PostEntity>;
+
+    @ManyToMany((type) => PostEntity, (post) => post.categories)
+    posts: PostEntity[];
 
     @Expose()
     @DeleteDateColumn({

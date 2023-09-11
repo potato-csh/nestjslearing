@@ -10,8 +10,8 @@ import { paginate, treePaginate } from '@/modules/database/helpers';
 import { QueryHook } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
-import { CreatPostDto, QueryPostDto } from '../dtos/post.dto';
-import { CategoryEntity, PostEntity } from '../entities';
+import { CreatePostDto, QueryPostDto } from '../dtos/post.dto';
+import { PostEntity } from '../entities';
 import { CategoryRepository } from '../repositories';
 import { PostRepository } from '../repositories/post.repository';
 
@@ -80,15 +80,15 @@ export class PostService extends BaseService<PostEntity, PostRepository, FindPar
      * 创建文章
      * @param data
      */
-    async create(data: CreatPostDto) {
+    async create(data: CreatePostDto) {
         const createPostDto = {
             ...data,
             // 文章所属分类
-            categories: (isArray(data.categories)
+            categories: isArray(data.categories)
                 ? await this.categoryRepository.findBy({
                       id: In(data.categories),
                   })
-                : []) as unknown as CategoryEntity,
+                : [],
         };
         const item = await this.repository.save(createPostDto);
         if (!isNil(this.searchService)) {

@@ -1,28 +1,24 @@
-import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    ParseUUIDPipe,
-    Patch,
-    Post,
-    Query,
-    SerializeOptions,
-} from '@nestjs/common';
+import { Controller, Get, Query, SerializeOptions } from '@nestjs/common';
 
-import { DeleteWithTrashDto } from '@/modules/restful/dtos/delete-with-trash.dto';
-
-import { RestoreDto } from '@/modules/restful/dtos/restore.dto';
-
-import { QueryCategoryDto } from '../dtos';
+import { BaseControllerWithTrash } from '@/modules/restful/base';
+import { Crud } from '@/modules/restful/crud';
 
 import { CreateCategoryDto, QueryCategoryTreeDto, UpdateCategoryDto } from '../dtos/category.dto';
 import { CategoryService } from '../services';
 
+@Crud({
+    id: 'category',
+    enabled: ['list', 'detail', 'store', 'update', 'delete', 'restore'],
+    dtos: {
+        store: CreateCategoryDto,
+        update: UpdateCategoryDto,
+    },
+})
 @Controller('categories')
-export class CategoryController {
-    constructor(protected service: CategoryService) {}
+export class CategoryController extends BaseControllerWithTrash<CategoryService> {
+    constructor(protected service: CategoryService) {
+        super(service);
+    }
 
     @Get('tree')
     @SerializeOptions({ groups: ['category-tree'] })
@@ -31,61 +27,5 @@ export class CategoryController {
         options: QueryCategoryTreeDto,
     ) {
         return this.service.findTrees(options);
-    }
-
-    @Get()
-    @SerializeOptions({ groups: ['category-list'] })
-    async list(
-        @Query()
-        options: QueryCategoryDto,
-    ) {
-        return this.service.paginate(options);
-    }
-
-    @Get(':id')
-    @SerializeOptions({ groups: ['category-detail'] })
-    async detail(
-        @Param('id', new ParseUUIDPipe())
-        id: string,
-    ) {
-        return this.service.detail(id);
-    }
-
-    @Post()
-    @SerializeOptions({ groups: ['category-detail'] })
-    async store(
-        @Body()
-        data: CreateCategoryDto,
-    ) {
-        return this.service.create(data);
-    }
-
-    @Patch()
-    @SerializeOptions({ groups: ['category-detail'] })
-    async update(
-        @Body()
-        data: UpdateCategoryDto,
-    ) {
-        return this.service.update(data);
-    }
-
-    @Delete()
-    @SerializeOptions({ groups: ['category-detail'] })
-    async delete(
-        @Body()
-        data: DeleteWithTrashDto,
-    ) {
-        const { ids, trash } = data;
-        return this.service.delete(ids, trash);
-    }
-
-    @Patch('restore')
-    @SerializeOptions({ groups: ['category-list'] })
-    async restore(
-        @Body()
-        data: RestoreDto,
-    ) {
-        const { ids } = data;
-        return this.service.restore(ids);
     }
 }

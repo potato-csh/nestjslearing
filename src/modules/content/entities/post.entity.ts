@@ -8,7 +8,6 @@ import {
     JoinTable,
     ManyToMany,
     OneToMany,
-    Relation,
     UpdateDateColumn,
 } from 'typeorm';
 
@@ -72,11 +71,11 @@ export class PostEntity extends BaseEntity {
         cascade: true,
     })
     @JoinTable()
-    categories: Relation<CategoryEntity>;
+    categories: CategoryEntity[];
 
     // 删除文章也会删除评论
     @OneToMany((type) => CommentEntity, (comment) => comment.post, { cascade: true })
-    comments: Relation<CommentEntity>;
+    comments: CommentEntity[];
 
     @Expose()
     commentCount: number;

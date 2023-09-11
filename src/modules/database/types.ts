@@ -1,7 +1,15 @@
 import { isNil } from 'lodash';
 import { IPaginationMeta, IPaginationOptions } from 'nestjs-typeorm-paginate';
-import { FindTreeOptions, ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import {
+    FindTreeOptions,
+    ObjectLiteral,
+    Repository,
+    SelectQueryBuilder,
+    TreeRepository,
+} from 'typeorm';
 
+import { BaseRepository } from './base/repository';
+import { BaseTreeRepository } from './base/tree.repository';
 import { OrderType, SelectTrashMode } from './constants';
 
 /**
@@ -142,3 +150,19 @@ type ServiceListQueryOptionNotWithTrashed<E extends ObjectLiteral> = Omit<
     ServiceListQueryOptionWithTrashed<E>,
     'trashed'
 >;
+
+/**
+ * Repository类型
+ */
+export type RepositoryType<E extends ObjectLiteral> =
+    | Repository<E>
+    | TreeRepository<E>
+    | BaseRepository<E>
+    | BaseTreeRepository<E>;
+
+/**
+ * 软删除选项
+ */
+export interface TrashedOptions {
+    trashed?: SelectTrashMode;
+}

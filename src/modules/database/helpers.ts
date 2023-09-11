@@ -1,5 +1,7 @@
-import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
+import { isNil } from 'lodash';
+import { DataSource, ObjectLiteral, ObjectType, Repository, SelectQueryBuilder } from 'typeorm';
 
+import { CUSTOM_REPOSITORY_METADATA } from './constants';
 import { PaginateOptions, PaginateReturn } from './types';
 
 /**
@@ -64,3 +66,19 @@ export function treePaginate<E extends ObjectLiteral>(
         },
     };
 }
+
+/**
+ * 获取自定义Repository的实例
+ * @param dataSource 数据库连接池
+ * @param Repo repository类
+ */
+export const getCustomRepository = <T extends Repository<E>, E extends ObjectLiteral>(
+    dataSource: DataSource,
+    Repo: ClassType<T>,
+): T => {
+    if (isNil(Repo)) return null;
+    const entity = Reflect.getMetadata(CUSTOM_REPOSITORY_METADATA, Repo);
+    if (!entity) return null;
+    const base = dataSource.getRepository<ObjectType<any>>(entity);
+    return new Repo(base.target, base.manager, base.queryRunner) as T;
+};

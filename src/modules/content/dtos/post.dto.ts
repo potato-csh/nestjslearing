@@ -71,7 +71,7 @@ export class QueryPostDto implements PaginateOptions {
  */
 // @DtoValidation({groups:['create']})
 @DtoValidation({ groups: ['create'] })
-export class CreatPostDto {
+export class CreatePostDto {
     @MaxLength(255, {
         always: true,
         message: `文章标题长度最大为$constraint1`,
@@ -124,7 +124,7 @@ export class CreatPostDto {
  * 文章更新验证
  */
 @DtoValidation({ groups: ['update'] })
-export class UpdatePostDto extends PartialType(CreatPostDto) {
+export class UpdatePostDto extends PartialType(CreatePostDto) {
     @IsUUID(undefined, { groups: ['update'], message: `文章ID格式错误` })
     @IsDefined({ groups: ['update'], message: `文章ID必须指定` })
     id: string;
