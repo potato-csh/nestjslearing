@@ -184,7 +184,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
             : this.addOrderByQuery(qb, orderBy);
         if (withTrashed) {
             qb.withDeleted();
-            if (onlyTrashed) qb.where(`category.deletedAt IS NOT NULL`);
+            if (onlyTrashed) qb.where(`${this.qbName}.deletedAt IS NOT NULL`);
         }
         return qb.getCount();
     }

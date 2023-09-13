@@ -43,7 +43,7 @@ export abstract class BaseService<
     }
 
     /**
-     * 获取查询数据列表的QueryBuildQuery
+     * 获取查询数据列表的QueryBuilder
      * @param qb querybuilder实例
      * @param option 查询选型
      * @param Callback 查询回调
@@ -66,7 +66,10 @@ export abstract class BaseService<
     }
 
     /**
-     * 获取查询单个项目的querybuilder
+     * 获取查询单个数据详情的QueryBuilder
+     * @param id
+     * @param qb
+     * @param callback
      */
     protected async buildItemQB(id: string, qb: SelectQueryBuilder<E>, callback?: QueryHook<E>) {
         qb.where(`${this.repository.qbName}.id = :id`, { id });

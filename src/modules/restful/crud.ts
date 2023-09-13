@@ -57,7 +57,7 @@ export const Crud =
             } else if (name === 'update' && !isNil(dtos.update)) {
                 Reflect.defineMetadata(
                     'design:paramtypes',
-                    [dtos.store, ...params],
+                    [dtos.update, ...params],
                     Target.prototype,
                     name,
                 );

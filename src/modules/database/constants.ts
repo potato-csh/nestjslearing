@@ -22,6 +22,9 @@ export enum OrderType {
 
 /**
  * 树形模型在删除父级后子级的处理方式
+ * DELETE: 在删除父节点时同时删除它的子孙节点
+ * UP: 在删除父节点时把它的子孙节点提升一级
+ * ROOT: 在删除父节点时把它的子节点提升为顶级节点
  */
 export enum TreeChildrenResolve {
     DELETE = 'delete',
