@@ -1,11 +1,13 @@
 import { writeFileSync } from 'fs';
 import path from 'path';
 
-import { ensureFileSync, readFileSync } from 'fs-extra';
-import { isNil, isFunction, has, get, set } from 'lodash';
+import dotenv from 'dotenv';
+import findUp from 'find-up';
+import fs, { ensureFileSync, readFileSync } from 'fs-extra';
+import { isNil, isFunction, has, get, set, omit } from 'lodash';
 import YAML from 'yaml';
 
-import { EnviromentType } from './constants';
+import { EnvironmentType } from './constants';
 import { deepMerge, isAsyncFn } from './helpers';
 import { ConfigStorageOption, ConfigureFactory, ConfigureRegister } from './types';
 
@@ -142,7 +144,17 @@ export class Configure {
         return this;
     }
 
-    remove(key: string) {}
+    remove(key: string) {
+        if (this.storage && has(this.yamlConfig, key)) {
+            this.yamlConfig = omit(this.yamlConfig, [key]);
+            if (has(this.config, key)) this.config = omit(this.config, [key]);
+            writeFileSync(this.yamlPath, JSON.stringify(this.yamlConfig, null, 4));
+            this.config = deepMerge(this.config, this.yamlConfig, 'replace');
+        } else if (has(this.config, key)) {
+            this.config = omit(this.config, [key]);
+        }
+        return this;
+    }
 
     /**
      * env用于获取环境变量，这是一个重载函数。
@@ -156,7 +168,7 @@ export class Configure {
     env<T extends BaseType = string>(key: string): T;
     env<T extends BaseType = string>(key: string, parseTo: ParseType<T>): T;
     env<T extends BaseType = string>(key: string, defaultValue: T): T;
-    env<T extends BaseType = string>(key: string, parseTo: ParseType<T>, defaultValue: T);
+    env<T extends BaseType = string>(key: string, parseTo: ParseType<T>, defaultValue: T): T;
     env<T extends BaseType = string>(key: string, parseTo?: ParseType<T> | T, defaultValue?: T) {
         if (!key) return process.env;
         const value = process.env[key];
@@ -192,9 +204,9 @@ export class Configure {
     protected setRunEnv() {
         if (
             isNil(process.env.NODE_ENV) ||
-            !Object.values(EnviromentType).includes(process.env.NODE_ENV as EnviromentType)
+            !Object.values(EnvironmentType).includes(process.env.NODE_ENV as EnvironmentType)
         ) {
-            process.env.NODE_ENV = EnviromentType.PRODUCTION;
+            process.env.NODE_ENV = EnvironmentType.PRODUCTION;
         }
     }
 
@@ -202,8 +214,40 @@ export class Configure {
      *
      * 获取当前运行环境的值
      */
-    protected getRunEnv(): EnviromentType {
-        return process.env.NODE_ENV as EnviromentType;
+    protected getRunEnv(): EnvironmentType {
+        return process.env.NODE_ENV as EnvironmentType;
+    }
+
+    /**
+     * 加载环境变量文件并合并到process.env中
+     * 读取步骤为先读取proccess.env中的所有环境变量，
+     * 然后读取.env中的环境变量（如果通过find-up向上查找能找到.env文件的话），
+     * 加载.env中的环境变量并覆盖合并process.env，
+     * 接着再读取.env.{运行环境}（比如.env.development）中的环境变量（如果通过find-up向上查找能找到该文件的话），
+     * 加载该文件中的环境变量并覆盖合合并process.env，得到最终的process.env。
+     * 此方法在初始化配置类实例时运行（setRunEnv之后）
+     */
+    protected loadEnvs() {
+        if (!process.env) {
+            process.env.NODE_ENV = EnvironmentType.PRODUCTION;
+        }
+        const search = [findUp.sync(['.env'])];
+        if ((process.env.NODE_ENV as EnvironmentType) !== EnvironmentType.PRODUCTION) {
+            search.push(findUp.sync([`.env.${process.env.NODE_ENV}`]));
+        }
+        const envFiles = search.filter((file) => file !== undefined) as string[];
+        // 所以文件中配置的环境变量
+        const fileEnvs = envFiles
+            .map((filePath) => dotenv.parse(fs.readFileSync(filePath)))
+            .reduce((oc, nc) => ({ ...oc, ...nc }), {});
+        // 与系统环境变量合并后赋值给一个常量
+        const envs = { ...process.env, ...fileEnvs };
+        // 过滤掉envs中存在而process.env不存在的值
+        const keys = Object.keys(envs).filter((key) => !(key in process.env));
+        // 把.env*中存在而系统环境变量中不存在的值追加到process.env中
+        keys.forEach((key) => {
+            process.env[key] = envs[key];
+        });
     }
 
     /**

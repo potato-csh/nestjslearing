@@ -24,7 +24,7 @@ export interface ConfigureFactory<
     /**
      * 配置注册器
      */
-    register: ConfigureRegister<RePartial<T>>;
+    register: ConfigureRegister<Partial<T>>;
     /**
      * 默认配置注册器
      */
