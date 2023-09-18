@@ -1,3 +1,4 @@
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { isNil } from 'lodash';
 import { IPaginationMeta, IPaginationOptions } from 'nestjs-typeorm-paginate';
 import {
@@ -166,3 +167,24 @@ export type RepositoryType<E extends ObjectLiteral> =
 export interface TrashedOptions {
     trashed?: SelectTrashMode;
 }
+
+/**
+ * 自定义数据库配置
+ */
+export type DbConfigOptions = {
+    common: Record<string, any>;
+    connections: Array<TypeOrmModuleOptions>;
+};
+
+/**
+ * 最终数据库配置
+ */
+export type DbConfig = Record<string, any> & {
+    common: Record<string, any>;
+    connections: TypeormOption[];
+};
+
+/**
+ * TypeOrm连接配置
+ */
+export type TypeormOption = Omit<TypeOrmModuleOptions, 'name' | 'migrations'> & { name: string };

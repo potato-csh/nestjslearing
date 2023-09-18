@@ -144,6 +144,19 @@ export class Configure {
         return this;
     }
 
+    /**
+     * 同步配置
+     * 添加一个配置构造器后需用使用此方法同步到配置中
+     */
+    async sync(name?: string) {
+        if (!isNil(name)) await this.syncFactory(name);
+        else {
+            for (const key in this.factories) {
+                await this.syncFactory(key);
+            }
+        }
+    }
+
     remove(key: string) {
         if (this.storage && has(this.yamlConfig, key)) {
             this.yamlConfig = omit(this.yamlConfig, [key]);
@@ -201,7 +214,7 @@ export class Configure {
     /**
      * 设置运行环境的值
      */
-    protected setRunEnv() {
+    setRunEnv() {
         if (
             isNil(process.env.NODE_ENV) ||
             !Object.values(EnvironmentType).includes(process.env.NODE_ENV as EnvironmentType)
@@ -214,7 +227,7 @@ export class Configure {
      *
      * 获取当前运行环境的值
      */
-    protected getRunEnv(): EnvironmentType {
+    getRunEnv(): EnvironmentType {
         return process.env.NODE_ENV as EnvironmentType;
     }
 

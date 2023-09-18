@@ -1,8 +1,70 @@
+import { resolve } from 'path';
+
 import { isNil } from 'lodash';
 import { DataSource, ObjectLiteral, ObjectType, Repository, SelectQueryBuilder } from 'typeorm';
 
+import { Configure } from '../core/configure';
+import { EnvironmentType } from '../core/constants';
+import { deepMerge } from '../core/helpers';
+import { createConnectionOptions } from '../core/helpers/options';
+import { ConfigureFactory, ConfigureRegister } from '../core/types';
+
 import { CUSTOM_REPOSITORY_METADATA } from './constants';
-import { PaginateOptions, PaginateReturn } from './types';
+import { DbConfig, DbConfigOptions, PaginateOptions, PaginateReturn } from './types';
+
+/**
+ * 创建数据库配置
+ * @param configure
+ * @param options
+ */
+export const createDbOptions = (configure: Configure, options: DbConfigOptions) => {
+    const newOptions: DbConfigOptions = {
+        common: deepMerge(
+            {
+                charset: 'utf8mb4',
+                logging: ['error'],
+                migrations: [],
+                paths: {
+                    migration: resolve(__dirname, '../../database/migrations'),
+                },
+            },
+            options.common ?? {},
+            'replace',
+        ),
+        connections: createConnectionOptions(options.connections ?? []),
+    };
+    newOptions.connections = newOptions.connections.map((connection) => {
+        const entities = connection.entities ?? [];
+        const newOption = { ...connection, entities };
+        return deepMerge(
+            newOptions.common,
+            {
+                ...newOption,
+                synchronize: configure.getRunEnv() !== EnvironmentType.PRODUCTION,
+                autoLoadEntities: true,
+            } as any,
+            'replace',
+        );
+    });
+    return newOptions as DbConfig;
+};
+
+/**
+ * 配置构建函数（动态配置系统）
+ */
+export const createDbConfig: (
+    register: ConfigureRegister<Partial<DbConfigOptions>>,
+) => ConfigureFactory<DbConfigOptions, DbConfig> = (register) => ({
+    register,
+    hook: (configure, value) => createDbOptions(configure, value),
+    defaultRegister: () => ({
+        common: {
+            charset: 'utf8mb4',
+            logging: ['error'],
+        },
+        connections: [],
+    }),
+});
 
 /**
  * 分页函数

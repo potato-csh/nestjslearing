@@ -12,3 +12,8 @@ export enum EnvironmentType {
     TEST = 'test',
     STAGE = 'stage',
 }
+
+/**
+ * 存储模块构造器的元数据注册函数
+ */
+export const MODULE_BUILDER_REGISTER = 'moudule_builder_register';
