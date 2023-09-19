@@ -62,6 +62,7 @@ export class App {
             }
         } catch (error) {
             console.log('Create app failed!');
+            console.log(error);
             exit(0);
         }
 

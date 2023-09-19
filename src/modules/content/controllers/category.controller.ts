@@ -1,7 +1,8 @@
 import { Controller, Get, Query, SerializeOptions } from '@nestjs/common';
 
 import { BaseControllerWithTrash } from '@/modules/restful/base';
-import { Crud } from '@/modules/restful/crud';
+
+import { Crud } from '@/modules/restful/decorators';
 
 import { CreateCategoryDto, QueryCategoryTreeDto, UpdateCategoryDto } from '../dtos/category.dto';
 import { CategoryService } from '../services';

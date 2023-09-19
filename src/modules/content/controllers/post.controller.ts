@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
 
 import { BaseControllerWithTrash } from '@/modules/restful/base';
-import { Crud } from '@/modules/restful/crud';
+
+import { Crud } from '@/modules/restful/decorators';
 
 import { CreatePostDto, QueryPostDto, UpdatePostDto } from '../dtos';
 import { PostService } from '../services/post.service';

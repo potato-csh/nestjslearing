@@ -149,7 +149,7 @@ export interface ConfigureFactory<
     /**
      * 配置注册器
      */
-    register: ConfigureRegister<Partial<T>>;
+    register: ConfigureRegister<RePartial<T>>;
     /**
      * 默认配置注册器
      */

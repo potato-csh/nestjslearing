@@ -1,7 +1,8 @@
 import { Controller, Get, Query, SerializeOptions } from '@nestjs/common';
 
 import { BaseController } from '@/modules/restful/base';
-import { Crud } from '@/modules/restful/crud';
+
+import { Crud } from '@/modules/restful/decorators';
 
 import { CreateCommentDto, QueryCommentDto, QueryCommentTreeDto } from '../dtos';
 import { CommentService } from '../services';
