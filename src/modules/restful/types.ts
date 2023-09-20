@@ -1,5 +1,8 @@
 import { Type } from '@nestjs/common';
+import { ExternalDocumentationObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { ClassTransformOptions } from 'class-transformer';
+
+import { Configure } from '../core/configure';
 
 /**
  * CRUD控制器方法列表
@@ -36,4 +39,70 @@ export interface CrudOptions {
     dtos: {
         [key in 'list' | 'store' | 'update']?: Type<any>;
     };
+}
+/**
+ * CRUD注册函数
+ * 生成一个CRUD选项的并通过metadata存储的函数
+ */
+export type CrudOptionsRegister = (configure: Configure) => CrudOptions | Promise<CrudOptions>;
+
+/**
+ * 定义Swagger的标签配置
+ */
+export interface ApiTagOption {
+    name: string;
+    description?: string;
+    externalDocs?: ExternalDocumentationObject;
+}
+
+/**
+ * 定义Swagger文档的选项
+ */
+export interface ApiDocSource {
+    title?: string;
+    description?: string;
+    auth?: boolean;
+    tags?: (string | ApiTagOption)[];
+}
+
+/**
+ * 路由系统(RestfulModule)的配置
+ */
+export interface ApiConfig extends ApiDocSource {
+    prefix?: {
+        router?: string;
+        doc?: string;
+    };
+    default: string;
+    enabled: string[];
+    versions: Record<string, ApiVersionOption>;
+}
+
+/**
+ * 版本配置类型
+ */
+export interface ApiVersionOption extends ApiDocSource {
+    routes?: ApiRouteOption[];
+}
+
+/**
+ * 路由集配置
+ */
+export interface ApiRouteOption {
+    name: string;
+    path: string;
+    controllers: Type<any>[];
+    children?: ApiRouteOption[];
+    doc?: ApiDocSource;
+}
+
+export interface ApiSwaggerOption extends ApiDocSource {
+    version: string;
+    path: string;
+    include: Type<any>[];
+}
+
+export interface ApiDocOption {
+    default?: ApiSwaggerOption;
+    route?: { [key: string]: ApiSwaggerOption };
 }

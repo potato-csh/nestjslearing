@@ -13,7 +13,7 @@ import { EnvironmentType } from './constants';
 import { deepMerge, isAsyncFn } from './helpers';
 import { ConfigStorageOption, ConfigureFactory, ConfigureRegister } from './types';
 /**
- * 配置类
+ * 核心配置类
  */
 export class Configure {
     // ================================================= 属性 start =================================================
