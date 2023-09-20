@@ -113,7 +113,6 @@ import { SearchType } from './types';
     ];
     if (configure.has('elastic') && searchType === 'elastic') providers.push(SearchService);
     return {
-        module: ContentModule,
         imports: [
             TypeOrmModule.forFeature(Object.values(entities)),
             DatabaseModule.forRepository(Object.values(repositories)),

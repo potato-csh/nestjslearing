@@ -1,16 +1,17 @@
-import { writeFileSync } from 'fs';
-import path from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import dotenv from 'dotenv';
-import findUp from 'find-up';
-import fs, { ensureFileSync, readFileSync } from 'fs-extra';
-import { isNil, isFunction, has, get, set, omit } from 'lodash';
-import YAML from 'yaml';
+import * as dotenv from 'dotenv';
+import * as findUp from 'find-up';
+
+import { ensureFileSync } from 'fs-extra';
+import { get, has, isFunction, isNil, omit, set } from 'lodash';
+import * as YAML from 'yaml';
 
 import { EnvironmentType } from './constants';
 import { deepMerge, isAsyncFn } from './helpers';
 import { ConfigStorageOption, ConfigureFactory, ConfigureRegister } from './types';
-
 /**
  * 配置类
  */

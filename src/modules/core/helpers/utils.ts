@@ -1,6 +1,6 @@
 import { Module, ModuleMetadata, Type } from '@nestjs/common';
 import { isArray, isObject } from 'class-validator';
-import deepmerge from 'deepmerge';
+import * as deepmerge from 'deepmerge';
 import { isNil } from 'lodash';
 
 /**
