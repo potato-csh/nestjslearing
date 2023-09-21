@@ -1,6 +1,8 @@
 import { Type } from '@nestjs/common';
 import { Routes, RouteTree } from '@nestjs/core';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import chalk from 'chalk';
+
 import { camelCase, trim, omit, isNil, isFunction, upperFirst } from 'lodash';
 
 import { Configure } from '../core/configure';
@@ -9,7 +11,8 @@ import { CreateModule, isAsyncFn } from '../core/helpers';
 
 import { CONTROLLER_DEPENDS, CRUD_OPTIONS_REGISTER } from './constants';
 import { registerCrud } from './crud';
-import { ApiRouteOption } from './types';
+import { Restful } from './restful';
+import { ApiDocOption, ApiRouteOption, CrudMethodOption } from './types';
 
 /**
  * 路由路径前缀处理
@@ -75,7 +78,7 @@ export const createRouteModuleTree = (
                 }
             }
             // 为每个没有自己添加’ApiTags‘ 装饰器的控制器添加Tag
-            if (doc.tags && doc.tags.length > 0) {
+            if (doc?.tags && doc.tags.length > 0) {
                 controllers.forEach((controller) => {
                     !Reflect.getMetadata('swagger/apiUseTags', controller) &&
                         ApiTags(
@@ -120,3 +123,69 @@ export const genRoutePath = (routePath: string, prefix?: string, version?: strin
  */
 export const genDocPath = (routePath: string, prefix?: string, version?: string) =>
     trimPath(`${prefix}${version ? `/${version.toLowerCase()}/` : '/'}${routePath}`, false);
+
+/**
+ * 根据生成配置打印API的URL
+ * @param configure
+ * @param restful
+ */
+export async function echoApi(configure: Configure, restful: Restful) {
+    const appUrl = await configure.get<string>('app.url');
+    const apiUrl = await configure.get<string>('app.api');
+    console.log(`- ApiUrl: ${chalk.green.underline(apiUrl)}`);
+    console.log('- ApiDocs:');
+    const { default: defaultDoc, ...docs } = restful.docs;
+    echoDocs('default', defaultDoc, appUrl);
+    for (const [name, doc] of Object.entries(docs)) {
+        console.log();
+        echoDocs(name, doc, appUrl);
+    }
+}
+
+/**
+ * 根据生成配置打印Doc的URL
+ * @param name
+ * @param doc
+ * @param appUrl
+ */
+function echoDocs(name: string, doc: ApiDocOption, appUrl: string) {
+    const getDocPath = (dpath: string) => `${appUrl}/${dpath}`;
+    if (!doc.routes && doc.default) {
+        console.log(
+            `[${chalk.blue(name.toUpperCase())}]: ${chalk.green.underline(
+                getDocPath(doc.default.path),
+            )}`,
+        );
+        return;
+    }
+    console.log(`[${chalk.blue(name.toUpperCase())}]:`);
+    if (doc.default) {
+        console.log([`default: ${chalk.green.underline(getDocPath(doc.default.path))}`]);
+    }
+    if (doc.routes) {
+        Object.entries(doc.routes).forEach(([_routeName, rdocs]) => {
+            console.log(
+                `<${chalk.yellowBright.bold(rdocs.title)}>:${chalk.green.underline(
+                    genDocPath(rdocs.path),
+                )}`,
+            );
+        });
+    }
+}
+
+/**
+ * 常用crud的hook配置生成
+ * @param summary
+ */
+export function createHookOption(summary?: string): CrudMethodOption {
+    return {
+        hook: (target, method) => {
+            if (!isNil(summary))
+                ApiOperation({ summary })(
+                    target,
+                    method,
+                    Object.getOwnPropertyDescriptor(target.prototype, method),
+                );
+        },
+    };
+}

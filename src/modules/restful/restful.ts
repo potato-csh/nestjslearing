@@ -153,12 +153,18 @@ export class Restful extends RouterConfigure {
      * @param app
      */
     factoryDocs<T extends INestApplication>(app: T) {
+        console.log(this._docs);
+        console.log('===========');
+        console.log(this._docs.default.default);
+        console.log(this._docs.default.routes);
         const docs = Object.values(this._docs)
-            .map((vdoc) => [vdoc.default, ...Object.values(vdoc.routes ?? [])])
+            .map((vdoc) => [vdoc.default, ...Object.values(vdoc.routes ?? {})])
             .reduce((o, n) => [...o, ...n], [])
             .filter((i) => !!i);
+        console.log('===========');
+        console.log(docs);
         for (const voption of docs) {
-            const { title, description, version, auth, include, tags } = voption;
+            const { title, description, version, auth, include, tags } = voption!;
             const builder = new DocumentBuilder();
             if (title) builder.setTitle(title);
             if (description) builder.setDescription(description);
@@ -174,7 +180,7 @@ export class Restful extends RouterConfigure {
             const document = SwaggerModule.createDocument(app, builder.build(), {
                 include: include.length > 0 ? include : [() => undefined as any],
             });
-            SwaggerModule.setup(voption.path, app, document);
+            SwaggerModule.setup(voption!.path, app, document);
         }
     }
 }

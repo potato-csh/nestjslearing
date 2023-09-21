@@ -8,6 +8,8 @@ import { DatabaseModule } from '@/modules/database/database.module';
 
 import { ElasticModule } from '@/modules/elastic/elastic.module';
 
+import { RestfulModule } from '@/modules/restful/restful.module';
+
 import { App } from '../app';
 import { Configure } from '../configure';
 import { MODULE_BUILDER_REGISTER } from '../constants';
@@ -17,6 +19,7 @@ import { AppFilter } from '../providers/app.filter';
 import { AppIntercepter } from '../providers/app.interceptor';
 import { AppPipe } from '../providers/app.pipe';
 import {
+    AppConfig,
     AppParams,
     CreateOptions,
     Creator,
@@ -41,9 +44,13 @@ export function createApp(options: CreateOptions): Creator {
  * 构建APP CLI,默认start命令应用启动监听app
  * @param creator APP构建器
  */
-export async function bootApp(creator: () => Promise<CreatorData>) {
-    const { app } = await creator();
-    await app.listen(3000, '0.0.0.0');
+export async function bootApp(
+    creator: () => Promise<CreatorData>,
+    listened?: (params: CreatorData) => () => Promise<void>,
+) {
+    const { app, configure } = await creator();
+    const { port, host } = await configure.get<AppConfig>('app');
+    await app.listen(port, host, listened({ app, configure } as any));
 }
 
 /**
@@ -60,6 +67,7 @@ export async function createBootModule(
     const importModules = [...modules, CoreModule];
     if (configure.has('database')) importModules.push(DatabaseModule);
     if (configure.has('elastic')) importModules.push(ElasticModule);
+    if (configure.has('api')) importModules.push(RestfulModule);
     const moduleMaps = await createImportModules(configure, importModules);
     const imports: ModuleMetadata['imports'] = Object.values(moduleMaps).map((m) => m.module);
     const providers: ModuleMetadata['providers'] = [];

@@ -71,7 +71,6 @@ import { ModuleBuilder } from '../core/decorators';
 
 import { DatabaseModule } from '../database/database.module';
 
-import * as controllers from './controllers';
 import * as entities from './entities';
 import { CategoryRepository, PostRepository } from './repositories';
 import * as repositories from './repositories';
@@ -117,7 +116,7 @@ import { SearchType } from './types';
             TypeOrmModule.forFeature(Object.values(entities)),
             DatabaseModule.forRepository(Object.values(repositories)),
         ],
-        controllers: Object.values(controllers),
+        // controllers: Object.values(controllers),
         providers,
         exports: [
             ...Object.values(services),

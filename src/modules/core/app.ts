@@ -3,6 +3,10 @@ import { exit } from 'process';
 
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { useContainer } from 'class-validator';
+import { isNil } from 'lodash';
+
+import { Restful } from '../restful/restful';
+import { ApiConfig } from '../restful/types';
 
 import { Configure } from './configure';
 import { createBootModule } from './helpers/app';
@@ -50,6 +54,11 @@ export class App {
                 configure: this._configure,
                 BootModule,
             });
+            // 根据是否传入api配置来启用openapi功能
+            if (!isNil(await this._configure.get<ApiConfig>('api', null))) {
+                const restful = this._app.get(Restful);
+                restful.factoryDocs(this.app);
+            }
             // 允许使用关闭监听的钩子
             this._app.enableShutdownHooks();
             // 为class-validator添加容器以便在自定义约束中可以注入dataSource等依赖
@@ -81,6 +90,22 @@ export class App {
             configure.add(key, configs[key]);
         }
         await configure.sync();
+        // 在本地设置app.url和app.api
+        let appUrl = await configure.get('app.url', undefined);
+        if (!isNil(appUrl)) {
+            const host = await configure.get<string>('app.host');
+            const port = await configure.get<number>('app.port');
+            const https = await configure.get<boolean>('app.https');
+            appUrl =
+                (await configure.get<boolean>('app.url'), undefined) ??
+                `${https ? 'https' : 'http'}://${host}:${port}`;
+            configure.set('app.url', appUrl);
+        }
+        const routePrefix = await configure.get('api.prefix.route', undefined);
+        const apiUrl = routePrefix
+            ? `${appUrl}${routePrefix.length > 0 ? `/${routePrefix}` : routePrefix}`
+            : appUrl;
+        configure.set('app.api', apiUrl);
         return configure;
     }
 }
