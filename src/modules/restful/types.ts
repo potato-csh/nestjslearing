@@ -104,5 +104,5 @@ export interface ApiSwaggerOption extends ApiDocSource {
 
 export interface ApiDocOption {
     default?: ApiSwaggerOption;
-    route?: { [key: string]: ApiSwaggerOption };
+    routes?: { [key: string]: ApiSwaggerOption };
 }

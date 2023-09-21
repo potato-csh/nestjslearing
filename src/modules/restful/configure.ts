@@ -4,8 +4,8 @@ import { pick } from 'lodash';
 
 import { Configure } from '../core/configure';
 
-import { getCleanRoutes } from './helpers';
-import { ApiConfig } from './types';
+import { createRouteModuleTree, genRoutePath, getCleanRoutes } from './helpers';
+import { ApiConfig, ApiRouteOption } from './types';
 
 /**
  * restful配置生成
@@ -73,7 +73,7 @@ export abstract class RouterConfigure {
             .map(([name, version]) => [
                 name,
                 {
-                    ...pick(config, ['title', 'describtion', 'auth']),
+                    ...pick(config, ['title', 'description', 'auth']),
                     ...version,
                     tag: Array.from(new Set([...(config.tags ?? []), ...(version.tags ?? [])])),
                     routes: getCleanRoutes(version.routes ?? []),
@@ -90,5 +90,65 @@ export abstract class RouterConfigure {
             throw new Error(`Default api version named ${this._default} not exists!`);
         }
         this.config = config;
+    }
+
+    /**
+     * 创建路由树和路由模块
+     * 遍历每个版本，根据它们的路由列表使用createRouteModuleTree生成嵌套的路由模块树，同时额外地，生一套不带版本前缀的默认版本模块树
+     */
+    protected async createRoutes() {
+        const versionMaps = Object.entries(this.config.versions);
+
+        // 对每个版本的路由使用’resolveRoutes‘方法进行处理
+        this._routes = (
+            await Promise.all(
+                versionMaps.map(async ([name, version]) =>
+                    (
+                        await createRouteModuleTree(
+                            this.configure,
+                            this._modules,
+                            version.routes ?? [],
+                            name,
+                        )
+                    ).map((route) => ({
+                        ...route,
+                        path: genRoutePath(route.path, this.config.prefix?.router, name),
+                    })),
+                ),
+            )
+        ).reduce((o, n) => [...o, ...n], []);
+        // 生成一个默认省略版本号的路由
+        const defaultVersion = this.config.versions[this._default];
+        this._routes = [
+            ...this._routes,
+            ...(
+                await createRouteModuleTree(
+                    this.configure,
+                    this._modules,
+                    defaultVersion.routes ?? [],
+                )
+            ).map((route) => ({
+                ...route,
+                path: genRoutePath(route.path, this.config.prefix?.router),
+            })),
+        ];
+    }
+
+    /**
+     * 获取路由模块
+     * @param routes
+     * @param parent
+     */
+    protected getRouteModules(routes: ApiRouteOption[], parent?: string) {
+        const result = routes
+            .map(({ name, children }) => {
+                const routeName = parent ? `${parent}.${name}` : name;
+                let modules: Type<any>[] = [this._modules[routeName]];
+                if (children) modules = [...modules, ...this.getRouteModules(children, routeName)];
+                return modules;
+            })
+            .reduce((o, n) => [...o, ...n], [])
+            .filter((i) => !!i);
+        return result;
     }
 }
