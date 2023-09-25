@@ -68,7 +68,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
      * 查询顶级评论
      * @param options
      */
-    async findRoots(options: FindTreeOptions & QueryParams<E>) {
+    async findRoots(options?: FindTreeOptions & QueryParams<E>) {
         const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
         const escapeAlias = (alias: string) => this.manager.connection.driver.escape(alias);
         const escapeColumn = (column: string) => this.manager.connection.driver.escape(column);
@@ -76,7 +76,6 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
         const joinColumn = this.metadata.treeParentRelation!.joinColumns[0];
         const parentPropertyName = joinColumn.givenDatabaseName || joinColumn.databaseName;
 
-        // let qb = this.buildBaseQB(this.createQueryBuilder('comment'));
         let qb = this.addOrderByQuery(this.buildBaseQB(), orderBy);
         qb.where(`${escapeAlias(this.qbName)}.${escapeColumn(parentPropertyName)} IS NULL`);
         FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, pick(options, ['relations', 'depth']));

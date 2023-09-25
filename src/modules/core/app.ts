@@ -49,7 +49,6 @@ export class App {
                 options,
             );
             modules = maps;
-            // modules = realModules;
             this._app = await builder({
                 configure: this._configure,
                 BootModule,
@@ -92,7 +91,7 @@ export class App {
         await configure.sync();
         // 在本地设置app.url和app.api
         let appUrl = await configure.get('app.url', undefined);
-        if (!isNil(appUrl)) {
+        if (isNil(appUrl)) {
             const host = await configure.get<string>('app.host');
             const port = await configure.get<number>('app.port');
             const https = await configure.get<boolean>('app.https');

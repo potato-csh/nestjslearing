@@ -77,7 +77,6 @@ export class QueryPostDto extends ListWithTrashedQueryDto {
 /**
  * 文章创建验证
  */
-// @DtoValidation({groups:['create']})
 @DtoValidation({ groups: ['create'] })
 export class CreatePostDto {
     @ApiProperty({ description: '文章标题', maxLength: 255 })

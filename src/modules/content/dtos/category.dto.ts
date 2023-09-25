@@ -34,21 +34,6 @@ export class QueryCategoryTreeDto {
     trashed?: SelectTrashMode;
 }
 
-// @DtoValidation({ type: 'query' })
-// export class QueryCategoryDto extends QueryCategoryTreeDto implements PaginateOptions {
-//     @Transform(({ value }) => toNumber(value))
-//     @Min(1, { message: `当前页必须大于1` })
-//     @IsNumber()
-//     @IsOptional()
-//     page = 1;
-
-//     @Transform(({ value }) => toNumber(value))
-//     @Min(1, { message: `当前页必须大于1` })
-//     @IsNumber()
-//     @IsOptional()
-//     limit = 10;
-// }
-
 @DtoValidation({ groups: ['create'] })
 export class CreateCategoryDto {
     @ApiProperty({

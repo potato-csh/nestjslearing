@@ -1,7 +1,7 @@
 import { Type } from '@nestjs/common';
 import { Routes, RouteTree } from '@nestjs/core';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 
 import { camelCase, trim, omit, isNil, isFunction, upperFirst } from 'lodash';
 
@@ -152,21 +152,21 @@ function echoDocs(name: string, doc: ApiDocOption, appUrl: string) {
     const getDocPath = (dpath: string) => `${appUrl}/${dpath}`;
     if (!doc.routes && doc.default) {
         console.log(
-            `[${chalk.blue(name.toUpperCase())}]: ${chalk.green.underline(
+            `    [${chalk.blue(name.toUpperCase())}]: ${chalk.green.underline(
                 getDocPath(doc.default.path),
             )}`,
         );
         return;
     }
-    console.log(`[${chalk.blue(name.toUpperCase())}]:`);
+    console.log(`    [${chalk.blue(name.toUpperCase())}]:`);
     if (doc.default) {
-        console.log([`default: ${chalk.green.underline(getDocPath(doc.default.path))}`]);
+        console.log(`      default: ${chalk.green.underline(getDocPath(doc.default.path))}`);
     }
     if (doc.routes) {
         Object.entries(doc.routes).forEach(([_routeName, rdocs]) => {
             console.log(
-                `<${chalk.yellowBright.bold(rdocs.title)}>:${chalk.green.underline(
-                    genDocPath(rdocs.path),
+                `      <${chalk.yellowBright.bold(rdocs.title)}>: ${chalk.green.underline(
+                    getDocPath(rdocs.path),
                 )}`,
             );
         });

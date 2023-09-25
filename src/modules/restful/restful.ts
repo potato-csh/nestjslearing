@@ -39,7 +39,7 @@ export class Restful extends RouterConfigure {
     }
 
     get docs() {
-        return this.docs;
+        return this._docs;
     }
 
     /**
@@ -69,6 +69,9 @@ export class Restful extends RouterConfigure {
         for (const route of routes) {
             const { name, doc, children } = route;
             const moduleName = parent ? `${parent}.${name}` : name;
+
+            // 加入在版本DOC中排除模块列表
+            if (hasAdditional(doc) || parent) this.excludeVersionModules.push(moduleName);
 
             // 添加到routeDocs中
             if (hasAdditional(doc)) {
@@ -109,8 +112,8 @@ export class Restful extends RouterConfigure {
         const docConfig: ApiDocOption = {};
         // 默认文档配置
         const defaultDoc = {
-            title: voption.title,
-            description: voption.description,
+            title: voption.title!,
+            description: voption.description!,
             tags: voption.tags ?? [],
             auth: voption.auth ?? false,
             version: name,
@@ -126,10 +129,9 @@ export class Restful extends RouterConfigure {
         const routeModules = isDefault
             ? this.getRouteModules(voption.routes ?? [])
             : this.getRouteModules(voption.routes ?? [], name);
-
         // 文档所依赖的模块
         const include = this.filterExcludeModules(routeModules);
-        // 版本Doc中有依赖路由模块或者版本doc中没有路由doc则添加版本doc
+        // 版本DOC中有依赖的路由模块或者版本DOC中没有路由DOC则添加版本默认DOC
         if (include.length > 0 || !docConfig.routes) {
             docConfig.default = { ...defaultDoc, include };
         }
@@ -153,16 +155,12 @@ export class Restful extends RouterConfigure {
      * @param app
      */
     factoryDocs<T extends INestApplication>(app: T) {
-        console.log(this._docs);
-        console.log('===========');
-        console.log(this._docs.default.default);
-        console.log(this._docs.default.routes);
         const docs = Object.values(this._docs)
             .map((vdoc) => [vdoc.default, ...Object.values(vdoc.routes ?? {})])
+            // .map((vdoc) => [vdoc.default])
+            // .map((vdoc) => [...Object.values(vdoc.routes ?? {})])
             .reduce((o, n) => [...o, ...n], [])
             .filter((i) => !!i);
-        console.log('===========');
-        console.log(docs);
         for (const voption of docs) {
             const { title, description, version, auth, include, tags } = voption!;
             const builder = new DocumentBuilder();

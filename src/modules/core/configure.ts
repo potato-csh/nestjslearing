@@ -289,7 +289,7 @@ export class Configure {
         if (!isFunction(register) && 'register' in register) {
             this.factories[key] = register as any;
         } else if (isFunction(register)) {
-            this.factories[key] = { register } as ConfigureFactory<T>;
+            this.factories[key] = { register } as any;
         }
         return this;
     }
