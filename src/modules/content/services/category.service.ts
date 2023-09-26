@@ -33,6 +33,7 @@ export class CategoryService extends BaseService<CategoryEntity, CategoryReposit
      * 新增分类
      */
     async create(data: CreateCategoryDto) {
+        console.log(data);
         const item = await this.repository.save({
             ...data,
             parent: await this.getParent(undefined, data.parent),

@@ -219,7 +219,7 @@ export class Configure {
             value = deepMerge(defaultValue, value, 'replace');
         }
         if (!isNil(hook)) {
-            isAsyncFn(hook) ? await hook(this, value) : hook(this, value);
+            value = isAsyncFn(hook) ? await hook(this, value) : hook(this, value);
         }
 
         this.set(key, value, storage && isNil(await this.get(key, null)), append);

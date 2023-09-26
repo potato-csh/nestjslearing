@@ -17,11 +17,7 @@ export abstract class BaseController<S> {
         this.service = service;
     }
 
-    async list(
-        @Query()
-        options: ListQueryDto,
-        ...args: any[]
-    ) {
+    async list(@Query() options: ListQueryDto, ...args: any[]) {
         return (this.service as any).paginate(options);
     }
 
@@ -36,6 +32,7 @@ export abstract class BaseController<S> {
     async store(
         @Body()
         data: any,
+        ...args: any[]
     ) {
         return (this.service as any).create(data);
     }

@@ -14,7 +14,7 @@ export class CommentRepository extends BaseTreeRepository<CommentEntity> {
 
     protected orderBy?: 'createdAt';
 
-    buildBaseQB(qb?: SelectQueryBuilder<CommentEntity>): SelectQueryBuilder<CommentEntity> {
+    buildBaseQB(qb: SelectQueryBuilder<CommentEntity>): SelectQueryBuilder<CommentEntity> {
         return super.buildBaseQB(qb).leftJoinAndSelect(`${this.qbName}.post`, 'post');
     }
 

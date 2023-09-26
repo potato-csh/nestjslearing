@@ -91,6 +91,7 @@ import { DbConfig } from './types';
         exit(1);
     }
     const { connections } = await configure.get<DbConfig>('database');
+    // console.log(configure);
     for (const dbOption of connections) {
         imports.push(TypeOrmModule.forRoot(dbOption as TypeOrmModuleOptions));
     }
@@ -123,7 +124,6 @@ export class DatabaseModule {
         dataSourceName?: string, // 数据连接池，默认是default
     ): DynamicModule {
         const providers: Provider[] = [];
-
         for (const Repo of repositories) {
             const entity = Reflect.getMetadata(CUSTOM_REPOSITORY_METADATA, Repo);
 

@@ -17,12 +17,30 @@ import { CategoryService } from '../services';
 @Crud(async () => ({
     id: 'category',
     enabled: [
-        { name: 'list', option: createHookOption('分类查询，以分页模式展示') },
-        { name: 'detail', option: createHookOption('分类详情') },
-        { name: 'store', option: createHookOption('创建分类') },
-        { name: 'update', option: createHookOption('更新分类') },
-        { name: 'delete', option: createHookOption('删除分类') },
-        { name: 'restore', option: createHookOption('恢复分类') },
+        {
+            name: 'list',
+            option: createHookOption('分类查询,以分页模式展示'),
+        },
+        {
+            name: 'detail',
+            option: createHookOption('分类详情'),
+        },
+        {
+            name: 'store',
+            option: createHookOption('创建分类'),
+        },
+        {
+            name: 'update',
+            option: createHookOption('更新分类'),
+        },
+        {
+            name: 'delete',
+            option: createHookOption('删除分类'),
+        },
+        {
+            name: 'restore',
+            option: createHookOption('恢复分类'),
+        },
     ],
     dtos: {
         store: CreateCategoryDto,

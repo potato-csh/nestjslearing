@@ -8,7 +8,7 @@ import { CategoryEntity } from '../entities';
 export class CategoryRepository extends BaseTreeRepository<CategoryEntity> {
     protected _qbName = 'category';
 
-    protected orderBy?: { name: 'customOrder'; order: OrderType.ASC };
+    protected orderBy: { name: 'customOrder'; order: OrderType.ASC };
 
     protected _childrenResolve?: TreeChildrenResolve.UP;
 }

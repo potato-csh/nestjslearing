@@ -15,10 +15,10 @@ export class PostRepository extends BaseRepository<PostEntity> {
             .leftJoinAndSelect(`${this.qbName}.categories`, 'categories')
             .addSelect((subQuery) => {
                 return subQuery
-                    .select('(COUNT(c.id))', 'count')
+                    .select('COUNT(c.id)', 'count')
                     .from(CommentEntity, 'c')
                     .where('c.post.id = post.id');
             }, 'commentCount')
-            .loadRelationIdAndMap(`${this.qbName}.commentCount`, `${this.qbName}.comments`);
+            .loadRelationCountAndMap(`${this.qbName}.commentCount`, `${this.qbName}.comments`);
     }
 }

@@ -4,16 +4,15 @@ import { ClassTransformOptions } from 'class-transformer';
 import { isNil } from 'lodash';
 
 import { BaseController, BaseControllerWithTrash } from './base';
-import { CRUD_OPTIONS } from './constants';
 import { CrudOptions, CrudItem } from './types';
 
 export const registerCrud = async <T extends BaseController<any> | BaseControllerWithTrash<any>>(
     Target: Type<T>,
     options: CrudOptions,
 ) => {
-    Reflect.defineMetadata(CRUD_OPTIONS, options, Target);
+    // Reflect.defineMetadata(CRUD_OPTIONS, options, Target);
 
-    const { id, enabled, dtos } = Reflect.getMetadata(CRUD_OPTIONS, Target) as CrudOptions;
+    const { id, enabled, dtos } = options;
     const methods: CrudItem[] = [];
 
     // 添加启用的crud方法

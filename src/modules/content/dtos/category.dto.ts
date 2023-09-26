@@ -51,9 +51,9 @@ export class CreateCategoryDto {
     })
     @MaxLength(25, {
         always: true,
-        message: `分类名称长度不得超过$constraint1`,
+        message: '分类名称长度不得超过$constraint1',
     })
-    @IsNotEmpty({ groups: ['create'], message: `分类名称不得为空` })
+    @IsNotEmpty({ groups: ['create'], message: '分类名称不得为空' })
     @IsOptional({ groups: ['update'] })
     name: string;
 
@@ -62,8 +62,8 @@ export class CreateCategoryDto {
     })
     @IsDataExist(CategoryEntity, { always: true, message: '父分类不存在' })
     @IsUUID(undefined, { always: true, message: '父分类ID格式不正确' })
-    @IsOptional({ always: true })
     @ValidateIf((value) => value.parent !== null && value.parent)
+    @IsOptional({ always: true })
     @Transform(({ value }) => (value === 'null' ? null : value))
     parent?: string;
 
@@ -74,7 +74,7 @@ export class CreateCategoryDto {
         default: 0,
     })
     @Transform(({ value }) => toNumber(value))
-    @Min(0, { message: '排序值必须大于0' })
+    @Min(0, { always: true, message: '排序值必须大于0' })
     @IsNumber(undefined, { always: true })
     @IsOptional({ always: true })
     customOrder = 0;
@@ -85,7 +85,7 @@ export class UpdateCategoryDto extends PartialType(CreateCategoryDto) {
     @ApiProperty({
         description: '待更新的分类ID',
     })
-    @IsUUID(undefined, { groups: ['update'], message: '文章ID格式错误' })
-    @IsDefined({ groups: ['update'], message: '文章ID必须指定' })
+    @IsUUID(undefined, { groups: ['update'], message: '分类ID格式错误' })
+    @IsDefined({ groups: ['update'], message: '分类ID必须指定' })
     id: string;
 }

@@ -53,7 +53,7 @@ export const createDbOptions = (configure: Configure, options: DbConfigOptions) 
  * 配置构建函数（动态配置系统）
  */
 export const createDbConfig: (
-    register: ConfigureRegister<Partial<DbConfigOptions>>,
+    register: ConfigureRegister<RePartial<DbConfigOptions>>,
 ) => ConfigureFactory<DbConfigOptions, DbConfig> = (register) => ({
     register,
     hook: (configure, value) => createDbOptions(configure, value),
