@@ -17,10 +17,22 @@ import { CommentService } from '../services';
 @Crud(async () => ({
     id: 'comment',
     enabled: [
-        { name: 'list', option: createHookOption('评论查询，以分页模式展示') },
-        { name: 'detail', option: createHookOption('评论详情') },
-        { name: 'store', option: createHookOption('创建评论') },
-        { name: 'delete', option: createHookOption('删除评论') },
+        {
+            name: 'list',
+            option: createHookOption('评论查询,以分页模式展示'),
+        },
+        {
+            name: 'detail',
+            option: createHookOption('评论详情'),
+        },
+        {
+            name: 'store',
+            option: createHookOption('添加评论'),
+        },
+        {
+            name: 'delete',
+            option: createHookOption('删除评论'),
+        },
     ],
     dtos: {
         store: CreateCommentDto,

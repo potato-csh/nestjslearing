@@ -62,9 +62,9 @@ export class Restful extends RouterConfigure {
         });
         let routeDocs: { [key: string]: ApiSwaggerOption } = {};
 
-        // 判断路由是否有除tags之外的其他doc属性
+        // 判断路由是否有除tags之外的其它doc属性
         const hasAdditional = (doc?: ApiDocSource) =>
-            doc && Object.keys(omit(doc, 'tag')).length > 0;
+            doc && Object.keys(omit(doc, 'tags')).length > 0;
 
         for (const route of routes) {
             const { name, doc, children } = route;
@@ -91,13 +91,13 @@ export class Restful extends RouterConfigure {
      * 排除已添加到文档include中的模块
      * @param routeModule
      */
-    protected filterExcludeModules(routeModule: Type<any>[]) {
+    protected filterExcludeModules(routeModules: Type<any>[]) {
         const excludeModules: Type<any>[] = [];
-        const excludeNmaes = Array.from(new Set(this.excludeVersionModules));
+        const excludeNames = Array.from(new Set(this.excludeVersionModules));
         for (const [name, module] of Object.entries(this._modules)) {
-            if (excludeNmaes.includes(name)) excludeModules.push(module);
+            if (excludeNames.includes(name)) excludeModules.push(module);
         }
-        return routeModule.filter(
+        return routeModules.filter(
             (rmodule) => !excludeModules.find((emodule) => emodule === rmodule),
         );
     }
@@ -157,8 +157,6 @@ export class Restful extends RouterConfigure {
     factoryDocs<T extends INestApplication>(app: T) {
         const docs = Object.values(this._docs)
             .map((vdoc) => [vdoc.default, ...Object.values(vdoc.routes ?? {})])
-            // .map((vdoc) => [vdoc.default])
-            // .map((vdoc) => [...Object.values(vdoc.routes ?? {})])
             .reduce((o, n) => [...o, ...n], [])
             .filter((i) => !!i);
         for (const voption of docs) {
@@ -178,6 +176,8 @@ export class Restful extends RouterConfigure {
             const document = SwaggerModule.createDocument(app, builder.build(), {
                 include: include.length > 0 ? include : [() => undefined as any],
             });
+            console.log(document.paths['/content/posts']);
+            // console.log(document.paths);
             SwaggerModule.setup(voption!.path, app, document);
         }
     }

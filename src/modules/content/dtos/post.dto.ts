@@ -16,7 +16,7 @@ import {
     Min,
     ValidateIf,
 } from 'class-validator';
-import { toNumber, isNil } from 'lodash';
+import { isNil, toNumber } from 'lodash';
 
 import { DtoValidation } from '@/modules/core/decorators/dto-validation.decorator';
 import { toBoolean } from '@/modules/core/helpers';
@@ -82,16 +82,16 @@ export class CreatePostDto {
     @ApiProperty({ description: '文章标题', maxLength: 255 })
     @MaxLength(255, {
         always: true,
-        message: `文章标题长度最大为$constraint1`,
+        message: '文章标题长度最大为$constraint1',
     })
-    @IsNotEmpty({ groups: ['create'], message: `文章标题必须填写` })
+    @IsNotEmpty({ groups: ['create'], message: '文章标题必须填写' })
     @IsOptional({ groups: ['update'] })
-    title: string;
+    title!: string;
 
     @ApiProperty({ description: '文章内容' })
-    @IsNotEmpty({ groups: ['create'], message: `文章内容必须填写` })
+    @IsNotEmpty({ groups: ['create'], message: '文章内容必须填写' })
     @IsOptional({ groups: ['update'] })
-    body: string;
+    body!: string;
 
     @ApiPropertyOptional({
         description: '文章内容类型: 默认为markdown',
@@ -107,23 +107,10 @@ export class CreatePostDto {
     @ApiPropertyOptional({ description: '文章描述', maxLength: 500 })
     @MaxLength(500, {
         always: true,
-        message: `文章描述的最大长度为$constraint1`,
+        message: '文章描述长度最大为$constraint1',
     })
     @IsOptional({ always: true })
     summary?: string;
-
-    @ApiPropertyOptional({
-        description: '关键字:用于SEO',
-        type: [String],
-        maxLength: 20,
-    })
-    @MaxLength(20, {
-        each: true,
-        always: true,
-        message: `每个关键词长度最大为$constrain1`,
-    })
-    @IsOptional({ always: true })
-    keyword?: string[];
 
     @ApiPropertyOptional({
         description: '发布时间:通过设置文章的发布时间来发布文章',
@@ -136,16 +123,17 @@ export class CreatePostDto {
     publishedAt?: Date;
 
     @ApiPropertyOptional({
-        description: '自定义排序',
-        type: Number,
-        minimum: 0,
-        default: 0,
+        description: '关键字:用于SEO',
+        type: [String],
+        maxLength: 20,
     })
-    @Transform(({ value }) => toNumber(value))
-    @Min(0, { message: `排序值必须大于0` })
-    @IsNumber(undefined, { always: true })
+    @MaxLength(20, {
+        each: true,
+        always: true,
+        message: '每个关键字长度最大为$constraint1',
+    })
     @IsOptional({ always: true })
-    customOrder = 0;
+    keywords?: string[];
 
     @ApiPropertyOptional({
         description: '关联分类ID列表:一篇文章可以关联多个分类',
@@ -163,6 +151,18 @@ export class CreatePostDto {
     })
     @IsOptional({ always: true })
     categories?: string[];
+
+    @ApiPropertyOptional({
+        description: '自定义排序',
+        type: Number,
+        minimum: 0,
+        default: 0,
+    })
+    @Transform(({ value }) => toNumber(value))
+    @Min(0, { always: true, message: '排序值必须大于0' })
+    @IsNumber(undefined, { always: true })
+    @IsOptional({ always: true })
+    customOrder = 0;
 }
 
 /**
@@ -173,7 +173,7 @@ export class UpdatePostDto extends PartialType(CreatePostDto) {
     @ApiProperty({
         description: '待更新的文章ID',
     })
-    @IsUUID(undefined, { groups: ['update'], message: `文章ID格式错误` })
-    @IsDefined({ groups: ['update'], message: `文章ID必须指定` })
-    id: string;
+    @IsUUID(undefined, { groups: ['update'], message: '文章ID格式错误' })
+    @IsDefined({ groups: ['update'], message: '文章ID必须指定' })
+    id!: string;
 }
