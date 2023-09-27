@@ -14,12 +14,11 @@ export type CrudMethod = 'detail' | 'delete' | 'restore' | 'list' | 'store' | 'u
  */
 export interface CrudMethodOption {
     /**
-     * 序列化选项，如果为`noGroup`则不传参数，否则根据`id`+ 方法匹配来传参
+     * 序列化选项,如果为`noGroup`则不传参数，否则根据`id`+方法匹配来传参
      */
     serialize?: ClassTransformOptions | 'noGroup';
     hook?: (target: Type<any>, method: string) => void;
 }
-
 /**
  * 每个启用方法的配置
  */
@@ -40,37 +39,15 @@ export interface CrudOptions {
         [key in 'list' | 'store' | 'update']?: Type<any>;
     };
 }
-/**
- * CRUD注册函数
- * 生成一个CRUD选项的并通过metadata存储的函数
- */
+
 export type CrudOptionsRegister = (configure: Configure) => CrudOptions | Promise<CrudOptions>;
 
 /**
- * 定义Swagger的标签配置
- */
-export interface ApiTagOption {
-    name: string;
-    description?: string;
-    externalDocs?: ExternalDocumentationObject;
-}
-
-/**
- * 定义Swagger文档的选项
- */
-export interface ApiDocSource {
-    title?: string;
-    description?: string;
-    auth?: boolean;
-    tags?: (string | ApiTagOption)[];
-}
-
-/**
- * 路由系统(RestfulModule)的配置
+ * API配置
  */
 export interface ApiConfig extends ApiDocSource {
     prefix?: {
-        router?: string;
+        route?: string;
         doc?: string;
     };
     default: string;
@@ -79,14 +56,14 @@ export interface ApiConfig extends ApiDocSource {
 }
 
 /**
- * 版本配置类型
+ * 版本配置
  */
 export interface ApiVersionOption extends ApiDocSource {
     routes?: ApiRouteOption[];
 }
 
 /**
- * 路由集配置
+ * 路由配置
  */
 export interface ApiRouteOption {
     name: string;
@@ -96,13 +73,35 @@ export interface ApiRouteOption {
     doc?: ApiDocSource;
 }
 
+interface ApiTagOption {
+    name: string;
+    description?: string;
+    externalDocs?: ExternalDocumentationObject;
+}
+
+/**
+ * swagger选项
+ */
 export interface ApiSwaggerOption extends ApiDocSource {
     version: string;
     path: string;
     include: Type<any>[];
 }
 
+/**
+ * API与swagger整合的选项
+ */
 export interface ApiDocOption {
     default?: ApiSwaggerOption;
     routes?: { [key: string]: ApiSwaggerOption };
+}
+
+/**
+ * 总配置,版本,路由中用于swagger的选项
+ */
+export interface ApiDocSource {
+    title?: string;
+    description?: string;
+    auth?: boolean;
+    tags?: (string | ApiTagOption)[];
 }

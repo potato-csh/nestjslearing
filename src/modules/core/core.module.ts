@@ -1,8 +1,10 @@
-// 核心模块
-
 import { Configure } from './configure';
-import { ModuleBuilder } from './decorators/module-builder.decorator';
 
+import { ModuleBuilder } from './decorators';
+
+/**
+ * 全局核心模块
+ */
 @ModuleBuilder(async (configure) => ({
     global: true,
     providers: [

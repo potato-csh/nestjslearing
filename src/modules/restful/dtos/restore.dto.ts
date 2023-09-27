@@ -1,12 +1,16 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsUUID } from 'class-validator';
 
-import { DtoValidation } from '@/modules/core/decorators/dto-validation.decorator';
+import { DtoValidation } from '@/modules/core/decorators';
 
+/**
+ * 批量恢复验证
+ */
 @DtoValidation()
 export class RestoreDto {
-    @ApiPropertyOptional({
+    @ApiProperty({
         description: '待恢复的ID列表',
+        type: [String],
     })
     @IsUUID(undefined, {
         each: true,

@@ -6,7 +6,7 @@ import { EntityNotFoundError, In, IsNull, Not, SelectQueryBuilder } from 'typeor
 
 import { BaseService } from '@/modules/database/base/service';
 import { SelectTrashMode } from '@/modules/database/constants';
-import { paginate, treePaginate } from '@/modules/database/helpers';
+import { paginate, manualPaginate } from '@/modules/database/helpers';
 import { QueryHook } from '@/modules/database/types';
 
 import { PostOrderType } from '../constants';
@@ -55,7 +55,7 @@ export class PostService extends BaseService<PostEntity, PostRepository, FindPar
             const ids = results.map((result) => result.id);
             const posts =
                 ids.length <= 0 ? [] : await this.repository.find({ where: { id: In(ids) } });
-            return treePaginate({ page, limit }, posts);
+            return manualPaginate({ page, limit }, posts);
         }
 
         const qb = await this.buildListQuery(this.repository.buildBaseQB(), options, callback);

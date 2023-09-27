@@ -1,23 +1,27 @@
-import { ArgumentMetadata, Paramtype, ValidationPipe } from '@nestjs/common';
-// import merge from 'deepmerge';
+import { ArgumentMetadata, Injectable, Paramtype, ValidationPipe } from '@nestjs/common';
 import * as merge from 'deepmerge';
+import { isObject, omit } from 'lodash';
 
 import { DTO_VALIDATION_OPTIONS } from '../constants';
 
+/**
+ * 全局管道,用于处理DTO验证
+ */
+@Injectable()
 export class AppPipe extends ValidationPipe {
-    async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
+    async transform(value: any, metadata: ArgumentMetadata) {
         const { metatype, type } = metadata;
-        // 获取当前验证参数的dto
+        // 获取要验证的dto类
         const dto = metatype as any;
-        // 通过metadata获取这个DTO类上的自定义验证选项
+        // 获取dto类的装饰器元数据中的自定义验证选项
         const options = Reflect.getMetadata(DTO_VALIDATION_OPTIONS, dto) || {};
-        // 把默认父类已经设置的验证选项给结构赋值给一个常量(备份)
+        // 把当前已设置的选项解构到备份对象
         const originOptions = { ...this.validatorOptions };
-        // 把父类已经设置的默认序列化选项赋值给一个常量(备份)
+        // 把当前已设置的class-transform选项解构到备份对象
         const originTransform = { ...this.transformOptions };
-        // 把自定义选项给结构出来，获取自定义的序列化和验证选项，以及当前DTO类需要验证的请求数据类型
+        // 把自定义的class-transform和type选项解构出来
         const { transformOptions, type: optionsType, ...customOptions } = options;
-        // 如果没有自定义设置待验证的请求数据类型，则默认为验证body数据
+        // 根据DTO类上设置的type来设置当前的DTO请求类型,默认为'body'
         const requestType: Paramtype = optionsType ?? 'body';
         // 如果被验证的DTO设置的请求类型与被验证的数据的请求类型不是同一种类型则跳过此管道
         if (requestType !== type) return value;
@@ -32,14 +36,25 @@ export class AppPipe extends ValidationPipe {
         this.validatorOptions = merge(this.validatorOptions, customOptions ?? {}, {
             arrayMerge: (_d, s, _o) => s,
         });
-
-        // 设置待验证的值
-        const toValidate = value;
-
-        // 使用父类的transform方法进行验证并返回序列化后的值
-        const result = await super.transform(toValidate, metadata);
-        // 重置默认验证和序列化选项为前面我们通过常量存储的父类自带的选项
+        const toValidate = isObject(value)
+            ? Object.fromEntries(
+                  Object.entries(value as Record<string, any>).map(([key, v]) => {
+                      if (!isObject(v) || !('mimetype' in v)) return [key, v];
+                      return [key, omit(v, ['fields'])];
+                  }),
+              )
+            : value;
+        // 序列化并验证dto对象
+        let result = await super.transform(toValidate, metadata);
+        // 如果dto类的中存在transform静态方法,则返回调用进一步transform之后的结果
+        if (typeof result.transform === 'function') {
+            result = await result.transform(result);
+            const { transform, ...data } = result;
+            result = data;
+        }
+        // 重置验证选项
         this.validatorOptions = originOptions;
+        // 重置transform选项
         this.transformOptions = originTransform;
         return result;
     }

@@ -4,8 +4,10 @@ import { ApiTags } from '@nestjs/swagger';
 
 import { BaseControllerWithTrash } from '@/modules/restful/base';
 
-import { Crud, Depends } from '@/modules/restful/decorators';
+import { Crud } from '@/modules/restful/decorators';
 
+import { Depends } from '@/modules/restful/decorators/depends.decorator';
+import { DeleteWithTrashDto, RestoreDto } from '@/modules/restful/dtos';
 import { createHookOption } from '@/modules/restful/helpers';
 
 import { ContentModule } from '../content.module';
@@ -53,4 +55,8 @@ export class PostController extends BaseControllerWithTrash<PostService> {
     constructor(protected service: PostService) {
         super(service);
     }
+    // @Get()
+    // async detail(id: string, ...args: any[]) {
+    //     return this.service.detail(id);
+    // }
 }

@@ -1,16 +1,24 @@
+/* eslint-disable @typescript-eslint/no-useless-constructor */
 import { isNil, pick, unset } from 'lodash';
 import {
+    EntityManager,
+    EntityTarget,
     FindOptionsUtils,
     FindTreeOptions,
     ObjectLiteral,
+    QueryRunner,
     SelectQueryBuilder,
     TreeRepository,
     TreeRepositoryUtils,
 } from 'typeorm';
 
 import { OrderType, TreeChildrenResolve } from '../constants';
-import { OrderQueryType, getOrderByQuery, QueryParams } from '../types';
+import { getOrderByQuery } from '../helpers';
+import { OrderQueryType, QueryParams } from '../types';
 
+/**
+ * 基础树形存储类
+ */
 export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<E> {
     /**
      * 查询器名称
@@ -27,8 +35,12 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
      */
     protected _childrenResolve?: TreeChildrenResolve;
 
+    constructor(target: EntityTarget<E>, manager: EntityManager, queryRunner?: QueryRunner) {
+        super(target, manager, queryRunner);
+    }
+
     /**
-     * 返回查询器的名称
+     * 返回查询器名称
      */
     get qbName() {
         return this._qbName;
@@ -48,14 +60,16 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
 
     /**
      * 生成排序的QueryBuilder
+     * @param qb
+     * @param orderBy
      */
     addOrderByQuery(qb: SelectQueryBuilder<E>, orderBy?: OrderQueryType) {
         const orderByQuery = orderBy ?? this.orderBy;
-        return !isNil(orderBy) ? getOrderByQuery(qb, this.qbName, orderByQuery) : qb;
+        return !isNil(orderByQuery) ? getOrderByQuery(qb, this.qbName, orderByQuery) : qb;
     }
 
     /**
-     * 查询树分类
+     * 查询树形分类
      * @param options
      */
     async findTrees(options?: FindTreeOptions & QueryParams<E>) {
@@ -65,7 +79,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
     }
 
     /**
-     * 查询顶级评论
+     * 查询顶级分类
      * @param options
      */
     async findRoots(options?: FindTreeOptions & QueryParams<E>) {
@@ -127,6 +141,41 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
     }
 
     /**
+     * 查询祖先树
+     * @param entity
+     * @param options
+     */
+    async findAncestorsTree(entity: E, options?: FindTreeOptions & QueryParams<E>) {
+        const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
+        let qb = this.buildBaseQB(
+            this.createDescendantsQueryBuilder(this.qbName, 'treeClosure', entity),
+        );
+        qb = addQuery
+            ? await addQuery(this.addOrderByQuery(qb, orderBy))
+            : this.addOrderByQuery(qb, orderBy);
+        if (withTrashed) {
+            qb.withDeleted();
+            if (onlyTrashed) qb.where(`${this.qbName}.deletedAt IS NOT NULL`);
+        }
+        FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, options);
+
+        const entities = await qb.getRawAndEntities();
+        const relationMaps = TreeRepositoryUtils.createRelationMaps(
+            this.manager,
+            this.metadata,
+            'treeEntity',
+            entities.raw,
+        );
+        TreeRepositoryUtils.buildParentEntityTree(
+            this.metadata,
+            entity,
+            entities.entities,
+            relationMaps,
+        );
+        return entity;
+    }
+
+    /**
      * 查询后代元素
      * @param entity
      * @param options
@@ -155,7 +204,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
     async findAncestors(entity: E, options?: FindTreeOptions & QueryParams<E>) {
         const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
         let qb = this.buildBaseQB(
-            this.createDescendantsQueryBuilder(this.qbName, 'treeClosure', entity),
+            this.createAncestorsQueryBuilder(this.qbName, 'treeClosure', entity),
         );
         FindOptionsUtils.applyOptionsToTreeQueryBuilder(qb, options);
         qb = addQuery
@@ -169,15 +218,31 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
     }
 
     /**
+     * 统计后代元素数量
+     * @param entity
+     * @param options
+     */
+    async countDescendants(entity: E, options?: FindTreeOptions & QueryParams<E>) {
+        const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
+        let qb = this.createDescendantsQueryBuilder(this.qbName, 'treeClosure', entity);
+        qb = addQuery
+            ? await addQuery(this.addOrderByQuery(qb, orderBy))
+            : this.addOrderByQuery(qb, orderBy);
+        if (withTrashed) {
+            qb.withDeleted();
+            if (onlyTrashed) qb.where(`${this.qbName}.deletedAt IS NOT NULL`);
+        }
+        return qb.getCount();
+    }
+
+    /**
      * 统计祖先元素数量
      * @param entity
      * @param options
      */
     async countAncestors(entity: E, options?: FindTreeOptions & QueryParams<E>) {
         const { addQuery, orderBy, withTrashed, onlyTrashed } = options ?? {};
-        let qb = this.buildBaseQB(
-            this.createDescendantsQueryBuilder(this.qbName, 'treeClosure', entity),
-        );
+        let qb = this.createAncestorsQueryBuilder(this.qbName, 'treeClosure', entity);
         qb = addQuery
             ? await addQuery(this.addOrderByQuery(qb, orderBy))
             : this.addOrderByQuery(qb, orderBy);
@@ -191,7 +256,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
     /**
      * 打平并展开树
      * @param trees
-     * @param depth
+     * @param level
      */
     async toFlatTrees(trees: E[], depth = 0, parent: E | null = null): Promise<E[]> {
         const data: Omit<E, 'children'>[] = [];
@@ -201,7 +266,7 @@ export class BaseTreeRepository<E extends ObjectLiteral> extends TreeRepository<
             const { children } = item;
             unset(item, 'children');
             data.push(item);
-            data.push(...(await this.toFlatTrees(children, depth + 1)));
+            data.push(...(await this.toFlatTrees(children, depth + 1, item)));
         }
         return data as E[];
     }

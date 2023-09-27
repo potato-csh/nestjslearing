@@ -1,8 +1,6 @@
 import { Body, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 
-import { DeleteWithTrashDto } from '../dtos/delete-with-trash.dto';
-import { ListWithTrashedQueryDto } from '../dtos/query.dto';
-import { RestoreDto } from '../dtos/restore.dto';
+import { DeleteWithTrashDto, ListWithTrashedQueryDto, RestoreDto } from '../dtos';
 
 /**
  * 带软删除验证的控制器

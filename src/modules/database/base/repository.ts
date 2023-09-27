@@ -2,11 +2,15 @@ import { isNil } from 'lodash';
 import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { OrderType } from '../constants';
-import { getOrderByQuery } from '../types';
+import { getOrderByQuery } from '../helpers';
+import { OrderQueryType } from '../types';
 
+/**
+ * 基础存储类
+ */
 export abstract class BaseRepository<E extends ObjectLiteral> extends Repository<E> {
     /**
-     * 构建QueryBuilder时默认的模型对应的查询名称
+     * 构建查询时默认的模型对应的查询名称
      */
     protected abstract _qbName: string;
 
@@ -16,7 +20,7 @@ export abstract class BaseRepository<E extends ObjectLiteral> extends Repository
     protected orderBy?: string | { name: string; order: `${OrderType}` };
 
     /**
-     * 返回查询器的名称
+     * 返回查询器名称
      */
     get qbName() {
         return this._qbName;
@@ -34,8 +38,8 @@ export abstract class BaseRepository<E extends ObjectLiteral> extends Repository
      * @param qb
      * @param orderBy
      */
-    addOrderByQuery(qb: SelectQueryBuilder<E>, orderBy?: OrderType) {
+    addOrderByQuery(qb: SelectQueryBuilder<E>, orderBy?: OrderQueryType) {
         const orderByQuery = orderBy ?? this.orderBy;
-        return !isNil(orderBy) ? getOrderByQuery(qb, this.qbName, orderByQuery) : qb;
+        return !isNil(orderByQuery) ? getOrderByQuery(qb, this.qbName, orderByQuery) : qb;
     }
 }

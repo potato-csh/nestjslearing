@@ -15,9 +15,7 @@ import { Configure } from '../configure';
 import { MODULE_BUILDER_REGISTER } from '../constants';
 import { CoreModule } from '../core.module';
 
-import { AppFilter } from '../providers/app.filter';
-import { AppIntercepter } from '../providers/app.interceptor';
-import { AppPipe } from '../providers/app.pipe';
+import { AppFilter, AppIntercepter, AppPipe } from '../providers';
 import {
     AppConfig,
     AppParams,
@@ -43,6 +41,7 @@ export function createApp(options: CreateOptions): Creator {
 /**
  * 构建APP CLI,默认start命令应用启动监听app
  * @param creator APP构建器
+ * @param listened 监听回调
  */
 export async function bootApp(
     creator: () => Promise<CreatorData>,

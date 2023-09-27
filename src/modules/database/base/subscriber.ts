@@ -1,21 +1,23 @@
 import { isNil } from 'lodash';
 import {
-    DataSource,
     EntitySubscriberInterface,
-    EntityTarget,
-    InsertEvent,
+    EventSubscriber,
     ObjectLiteral,
     ObjectType,
-    RecoverEvent,
-    RemoveEvent,
+    UpdateEvent,
+    InsertEvent,
     SoftRemoveEvent,
+    RemoveEvent,
+    RecoverEvent,
+    TransactionStartEvent,
     TransactionCommitEvent,
     TransactionRollbackEvent,
-    TransactionStartEvent,
-    UpdateEvent,
+    EntityTarget,
+    DataSource,
 } from 'typeorm';
 
 import { getCustomRepository } from '../helpers';
+
 import { RepositoryType } from '../types';
 
 type SubscriberEvent<E extends ObjectLiteral> =
@@ -31,6 +33,7 @@ type SubscriberEvent<E extends ObjectLiteral> =
 /**
  * 基础模型观察者
  */
+@EventSubscriber()
 export abstract class BaseSubscriber<E extends ObjectLiteral>
     implements EntitySubscriberInterface<E>
 {
@@ -41,7 +44,7 @@ export abstract class BaseSubscriber<E extends ObjectLiteral>
 
     /**
      * 构造函数
-     * @param dataSource
+     * @param dataSource 数据连接池
      */
     constructor(protected dataSource: DataSource) {
         this.dataSource.subscribers.push(this);
@@ -64,7 +67,7 @@ export abstract class BaseSubscriber<E extends ObjectLiteral>
         return event.manager;
     }
 
-    protected getRepository<
+    protected getRepositoy<
         C extends ClassType<T>,
         T extends RepositoryType<E>,
         A extends EntityTarget<ObjectLiteral>,

@@ -1,23 +1,22 @@
 import { Type } from '@nestjs/common';
 import { Routes } from '@nestjs/core';
-import { pick } from 'lodash';
+import { get, pick } from 'lodash';
 
 import { Configure } from '../core/configure';
 
 import { createRouteModuleTree, genRoutePath, getCleanRoutes } from './helpers';
-import { ApiConfig, ApiRouteOption } from './types';
 
+import { ApiConfig, ApiRouteOption } from './types';
 /**
- * restful配置生成
+ * Rest配置生成
  */
 export abstract class RouterConfigure {
     constructor(protected configure: Configure) {}
 
-    // ================================================= 属性 =================================================
     /**
      * API配置
      */
-    protected config: ApiConfig;
+    protected config!: ApiConfig;
 
     /**
      * 路由表
@@ -55,18 +54,24 @@ export abstract class RouterConfigure {
         return this._modules;
     }
 
+    getConfig<T>(key?: string, defaultValue?: any): T {
+        return key ? get(this.config, key, defaultValue) : this.config;
+    }
+
+    abstract create(_config: ApiConfig): void;
+
     /**
      * 创建配置
      * @param config
      */
     protected createConfig(config: ApiConfig) {
         if (!config.default) {
-            throw new Error('default api version name should beed config!');
+            throw new Error('default api version name should been config!');
         }
         const versionMaps = Object.entries(config.versions)
-            // 过滤启用版本
+            // 过滤启用的版本
             .filter(([name]) => {
-                if (config.default === name) return name;
+                if (config.default === name) return true;
                 return config.enabled.includes(name);
             })
             // 合并版本配置与总配置
@@ -75,7 +80,7 @@ export abstract class RouterConfigure {
                 {
                     ...pick(config, ['title', 'description', 'auth']),
                     ...version,
-                    tag: Array.from(new Set([...(config.tags ?? []), ...(version.tags ?? [])])),
+                    tags: Array.from(new Set([...(config.tags ?? []), ...(version.tags ?? [])])),
                     routes: getCleanRoutes(version.routes ?? []),
                 },
             ]);
@@ -85,7 +90,7 @@ export abstract class RouterConfigure {
         this._versions = Object.keys(config.versions);
         // 设置默认版本号
         this._default = config.default;
-        // 启用的版本必须包含默认版本
+        // 启用的版本中必须包含默认版本
         if (!this._versions.includes(this._default)) {
             throw new Error(`Default api version named ${this._default} not exists!`);
         }
@@ -93,13 +98,30 @@ export abstract class RouterConfigure {
     }
 
     /**
-     * 创建路由树和路由模块
-     * 遍历每个版本，根据它们的路由列表使用createRouteModuleTree生成嵌套的路由模块树，同时额外地，生一套不带版本前缀的默认版本模块树
+     * 获取一个路由列表下的所有路由模块(路由模块是手动创建的动态模块)
+     * @param routes
+     * @param parent
+     */
+    protected getRouteModules(routes: ApiRouteOption[], parent?: string) {
+        const result = routes
+            .map(({ name, children }) => {
+                const routeName = parent ? `${parent}.${name}` : name;
+                let modules: Type<any>[] = [this._modules[routeName]];
+                if (children) modules = [...modules, ...this.getRouteModules(children, routeName)];
+                return modules;
+            })
+            .reduce((o, n) => [...o, ...n], [])
+            .filter((i) => !!i);
+        return result;
+    }
+
+    /**
+     * 创建路由树及路由模块
      */
     protected async createRoutes() {
         const versionMaps = Object.entries(this.config.versions);
 
-        // 对每个版本的路由使用’resolveRoutes‘方法进行处理
+        // 对每个版本的路由使用'resolveRoutes'方法进行处理
         this._routes = (
             await Promise.all(
                 versionMaps.map(async ([name, version]) =>
@@ -112,7 +134,7 @@ export abstract class RouterConfigure {
                         )
                     ).map((route) => ({
                         ...route,
-                        path: genRoutePath(route.path, this.config.prefix?.router, name),
+                        path: genRoutePath(route.path, this.config.prefix?.route, name),
                     })),
                 ),
             )
@@ -129,26 +151,8 @@ export abstract class RouterConfigure {
                 )
             ).map((route) => ({
                 ...route,
-                path: genRoutePath(route.path, this.config.prefix?.router),
+                path: genRoutePath(route.path, this.config.prefix?.route),
             })),
         ];
-    }
-
-    /**
-     * 获取路由模块
-     * @param routes
-     * @param parent
-     */
-    protected getRouteModules(routes: ApiRouteOption[], parent?: string) {
-        const result = routes
-            .map(({ name, children }) => {
-                const routeName = parent ? `${parent}.${name}` : name;
-                let modules: Type<any>[] = [this._modules[routeName]];
-                if (children) modules = [...modules, ...this.getRouteModules(children, routeName)];
-                return modules;
-            })
-            .reduce((o, n) => [...o, ...n], [])
-            .filter((i) => !!i);
-        return result;
     }
 }

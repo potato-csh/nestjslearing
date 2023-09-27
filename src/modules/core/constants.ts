@@ -4,16 +4,13 @@
 export const DTO_VALIDATION_OPTIONS = 'dto_validation_options';
 
 /**
- * 当前运行环境变量
+ * 运行环境
  */
 export enum EnvironmentType {
     DEVELOPMENT = 'development',
     PRODUCTION = 'production',
     TEST = 'test',
-    STAGE = 'stage',
+    PREVIEW = 'preview',
 }
 
-/**
- * 存储模块构造器的元数据注册函数
- */
-export const MODULE_BUILDER_REGISTER = 'moudule_builder_register';
+export const MODULE_BUILDER_REGISTER = 'module_builder_register';

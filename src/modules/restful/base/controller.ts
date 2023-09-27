@@ -1,7 +1,6 @@
 import { Body, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 
-import { DeleteDto } from '../dtos/delete.dto';
-import { ListQueryDto } from '../dtos/query.dto';
+import { DeleteDto, ListQueryDto } from '../dtos';
 
 /**
  * 基础控制器

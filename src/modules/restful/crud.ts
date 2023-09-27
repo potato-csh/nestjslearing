@@ -1,24 +1,21 @@
-import { Type, SerializeOptions, Get, Post, Patch, Delete } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { Delete, Get, Patch, Post, SerializeOptions, Type } from '@nestjs/common';
+import { ApiBody, ApiQuery } from '@nestjs/swagger';
 import { ClassTransformOptions } from 'class-transformer';
 import { isNil } from 'lodash';
 
 import { BaseController, BaseControllerWithTrash } from './base';
-import { CrudOptions, CrudItem } from './types';
+
+import { CrudItem, CrudOptions } from './types';
 
 export const registerCrud = async <T extends BaseController<any> | BaseControllerWithTrash<any>>(
     Target: Type<T>,
     options: CrudOptions,
 ) => {
-    // Reflect.defineMetadata(CRUD_OPTIONS, options, Target);
-
     const { id, enabled, dtos } = options;
     const methods: CrudItem[] = [];
-
-    // 添加启用的crud方法
+    // 添加启用的CRUD方法
     for (const value of enabled) {
         const item = (typeof value === 'string' ? { name: value } : value) as CrudItem;
-
         if (
             methods.map(({ name }) => name).includes(item.name) ||
             !isNil(Object.getOwnPropertyDescriptor(Target.prototype, item.name))
@@ -26,7 +23,6 @@ export const registerCrud = async <T extends BaseController<any> | BaseControlle
             continue;
         methods.push(item);
     }
-
     // 添加控制器方法的具体实现,参数的DTO类型,方法及路径装饰器,序列化选项,是否允许匿名访问等metadata
     // 添加其它回调函数
     for (const { name, option = {} } of methods) {
@@ -43,6 +39,7 @@ export const registerCrud = async <T extends BaseController<any> | BaseControlle
                 },
             });
         }
+
         const descriptor = Object.getOwnPropertyDescriptor(Target.prototype, name);
 
         const [, ...params] = Reflect.getMetadata('design:paramtypes', Target.prototype, name);
@@ -54,6 +51,7 @@ export const registerCrud = async <T extends BaseController<any> | BaseControlle
                 Target.prototype,
                 name,
             );
+            ApiBody({ type: dtos.store })(Target, name, descriptor);
         } else if (name === 'update' && !isNil(dtos.update)) {
             Reflect.defineMetadata(
                 'design:paramtypes',
@@ -61,6 +59,7 @@ export const registerCrud = async <T extends BaseController<any> | BaseControlle
                 Target.prototype,
                 name,
             );
+            ApiBody({ type: dtos.update })(Target, name, descriptor);
         } else if (name === 'list' && !isNil(dtos.list)) {
             Reflect.defineMetadata(
                 'design:paramtypes',
@@ -70,6 +69,7 @@ export const registerCrud = async <T extends BaseController<any> | BaseControlle
             );
             ApiQuery({ type: dtos.list })(Target, name, descriptor);
         }
+
         let serialize: ClassTransformOptions = {};
         if (isNil(option.serialize)) {
             if (['detail', 'store', 'update', 'delete', 'restore'].includes(name)) {

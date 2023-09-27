@@ -4,8 +4,9 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { BaseController } from '@/modules/restful/base';
 
-import { Crud, Depends } from '@/modules/restful/decorators';
+import { Crud } from '@/modules/restful/decorators';
 
+import { Depends } from '@/modules/restful/decorators/depends.decorator';
 import { createHookOption } from '@/modules/restful/helpers';
 
 import { ContentModule } from '../content.module';

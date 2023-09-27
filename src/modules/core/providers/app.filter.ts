@@ -1,8 +1,13 @@
-import { ArgumentsHost, HttpException, HttpStatus, Type } from '@nestjs/common';
+import { ArgumentsHost, Catch, HttpException, HttpStatus, Type } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import { isObject } from 'class-validator';
-import { EntityNotFoundError, EntityPropertyNotFoundError, QueryFailedError } from 'typeorm';
+import { isObject } from 'lodash';
+import { EntityPropertyNotFoundError, QueryFailedError } from 'typeorm';
+import { EntityNotFoundError } from 'typeorm/error/EntityNotFoundError';
 
+/**
+ * 全局过滤器,用于响应自定义异常
+ */
+@Catch()
 export class AppFilter<T = Error> extends BaseExceptionFilter<T> {
     protected resExceptions: Array<{ class: Type<Error>; status?: number } | Type<Error>> = [
         { class: EntityNotFoundError, status: HttpStatus.NOT_FOUND },

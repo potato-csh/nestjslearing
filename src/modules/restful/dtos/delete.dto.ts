@@ -1,14 +1,14 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsUUID } from 'class-validator';
 
-import { DtoValidation } from '@/modules/core/decorators/dto-validation.decorator';
+import { DtoValidation } from '@/modules/core/decorators';
 
 /**
  * 批量删除验证
  */
 @DtoValidation()
 export class DeleteDto {
-    @ApiPropertyOptional({
+    @ApiProperty({
         description: '待删除的ID列表',
         type: [String],
     })

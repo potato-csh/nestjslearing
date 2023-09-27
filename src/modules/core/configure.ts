@@ -151,7 +151,7 @@ export class Configure {
     /**
      * 设置运行环境的值
      */
-    setRunEnv() {
+    protected setRunEnv() {
         if (
             isNil(process.env.NODE_ENV) ||
             !Object.values(EnvironmentType).includes(process.env.NODE_ENV as EnvironmentType)
@@ -178,7 +178,7 @@ export class Configure {
      * 此方法在初始化配置类实例时运行（setRunEnv之后）
      */
     protected loadEnvs() {
-        if (!process.env) {
+        if (!process.env.NODE_ENV) {
             process.env.NODE_ENV = EnvironmentType.PRODUCTION;
         }
         const search = [findUp.sync(['.env'])];
@@ -186,19 +186,26 @@ export class Configure {
             search.push(findUp.sync([`.env.${process.env.NODE_ENV}`]));
         }
         const envFiles = search.filter((file) => file !== undefined) as string[];
-        // 所以文件中配置的环境变量
+        // 所有文件中配置的环境变量
         const fileEnvs = envFiles
             .map((filePath) => dotenv.parse(fs.readFileSync(filePath)))
-            .reduce((oc, nc) => ({ ...oc, ...nc }), {});
+            .reduce(
+                (oc, nc) => ({
+                    ...oc,
+                    ...nc,
+                }),
+                {},
+            );
         // 与系统环境变量合并后赋值给一个常量
         const envs = { ...process.env, ...fileEnvs };
-        // 过滤掉envs中存在而process.env不存在的值
+        // 过滤掉在envs中存在而在process.env中不存在的值
         const keys = Object.keys(envs).filter((key) => !(key in process.env));
         // 把.env*中存在而系统环境变量中不存在的值追加到process.env中
         keys.forEach((key) => {
             process.env[key] = envs[key];
         });
     }
+
     // ================================================= 环境变量 end =================================================
 
     // ================================================= 配置构造器 start =================================================
@@ -221,7 +228,6 @@ export class Configure {
         if (!isNil(hook)) {
             value = isAsyncFn(hook) ? await hook(this, value) : hook(this, value);
         }
-
         this.set(key, value, storage && isNil(await this.get(key, null)), append);
         return this;
     }
@@ -275,6 +281,7 @@ export class Configure {
         } else {
             set(this.config, key, value);
         }
+        return this;
     }
 
     /**
@@ -301,7 +308,7 @@ export class Configure {
     remove(key: string) {
         if (this.storage && has(this.yamlConfig, key)) {
             this.yamlConfig = omit(this.yamlConfig, [key]);
-            if (has(this.config, key)) this.config = omit(this.config, [key]);
+            if (has(this.config, key)) omit(this.config, [key]);
             writeFileSync(this.yamlPath, JSON.stringify(this.yamlConfig, null, 4));
             this.config = deepMerge(this.config, this.yamlConfig, 'replace');
         } else if (has(this.config, key)) {

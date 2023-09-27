@@ -8,7 +8,7 @@ import { isNil } from 'lodash';
  * @param value
  */
 export function toBoolean(value?: string | boolean): boolean {
-    if (isNil(value)) return undefined;
+    if (isNil(value)) return false;
     if (typeof value === 'boolean') return value;
     try {
         return JSON.parse(value.toLowerCase());
@@ -29,8 +29,8 @@ export function toNull(value?: string | null): string | null | undefined {
  * 判断一个函数是否为异步函数
  */
 export function isAsyncFn<R, A extends Array<any>>(
-    callback: (...args: A) => Promise<R> | R,
-): callback is (...args: A) => Promise<R> {
+    callback: (...asgs: A) => Promise<R> | R,
+): callback is (...asgs: A) => Promise<R> {
     const AsyncFunction = (async () => {}).constructor;
     return callback instanceof AsyncFunction === true;
 }
